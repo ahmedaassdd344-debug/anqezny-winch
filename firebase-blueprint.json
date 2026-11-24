@@ -1,0 +1,297 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user role and profile in Anqezny",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "User full name" },
+        "role": { "type": "string", "enum": ["customer", "driver", "company", "admin"] },
+        "phone": { "type": "string", "description": "Egyptian mobile number" },
+        "email": { "type": "string", "description": "Google account email" },
+        "acceptedTerms": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp via FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp via FieldValue.serverTimestamp()" }
+      },
+      "required": ["userId", "displayName", "role", "acceptedTerms", "createdAt", "updatedAt"]
+    },
+    "DriverProfile": {
+      "title": "DriverProfile",
+      "description": "Public & operational profile of an independent or company-affiliated winch driver",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "winchType": { "type": "string" },
+        "plateNumber": { "type": "string" },
+        "area": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
+        "online": { "type": "boolean" },
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "walletBalance": { "type": "number" },
+        "withdrawableBalance": { "type": "number" },
+        "totalTrips": { "type": "integer" },
+        "ratingSum": { "type": "integer" },
+        "ratingCount": { "type": "integer" },
+        "ratingAvg": { "type": "number" },
+        "docsSubmitted": { "type": "boolean" },
+        "acceptedTerms": { "type": "boolean" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "name", "winchType", "plateNumber", "area", "status", "online",
+        "walletBalance", "withdrawableBalance", "totalTrips", "ratingSum", "ratingCount",
+        "ratingAvg", "docsSubmitted", "acceptedTerms", "createdAt", "updatedAt"
+      ]
+    },
+    "DriverPrivateDocs": {
+      "title": "DriverPrivateDocs",
+      "description": "Private PII and legal verification documents for a driver",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "phone": { "type": "string" },
+        "nationalId": { "type": "string" },
+        "licenseNumber": { "type": "string" },
+        "licenseExpiry": { "type": "string" },
+        "docIdCardThumb": { "type": "string" },
+        "docDriverLicenseThumb": { "type": "string" },
+        "docVehicleLicenseThumb": { "type": "string" },
+        "docTruckPhotoThumb": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "phone", "nationalId", "licenseNumber", "licenseExpiry", "updatedAt"]
+    },
+    "CompanyProfile": {
+      "title": "CompanyProfile",
+      "description": "Fleet/Operating company registered on Anqezny",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "managerName": { "type": "string" },
+        "commercialReg": { "type": "string" },
+        "taxCard": { "type": "string" },
+        "address": { "type": "string" },
+        "area": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "suspended"] },
+        "acceptedTerms": { "type": "boolean" },
+        "docsSubmitted": { "type": "boolean" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "companyName", "managerName", "commercialReg", "taxCard", "address",
+        "area", "status", "acceptedTerms", "docsSubmitted", "createdAt", "updatedAt"
+      ]
+    },
+    "CompanyPrivateDocs": {
+      "title": "CompanyPrivateDocs",
+      "description": "Private legal documents for a company",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "phone": { "type": "string" },
+        "docRegThumb": { "type": "string" },
+        "docTaxThumb": { "type": "string" },
+        "docIdThumb": { "type": "string" },
+        "docOfficeThumb": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "phone", "updatedAt"]
+    },
+    "CompanyDriverInvite": {
+      "title": "CompanyDriverInvite",
+      "description": "Driver registered under a company",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "driverName": { "type": "string" },
+        "driverPhone": { "type": "string" },
+        "plateNumber": { "type": "string" },
+        "winchType": { "type": "string" },
+        "area": { "type": "string" },
+        "linkedDriverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["invited", "linked"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyId", "companyName", "driverName", "driverPhone", "plateNumber", "winchType", "area", "status", "createdAt", "updatedAt"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "Winch rescue or transport trip in Giza",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "driverPlate": { "type": "string" },
+        "companyId": { "type": "string" },
+        "pickupArea": { "type": "string" },
+        "pickupLat": { "type": "number" },
+        "pickupLng": { "type": "number" },
+        "dropoffArea": { "type": "string" },
+        "dropoffLat": { "type": "number" },
+        "dropoffLng": { "type": "number" },
+        "distanceKm": { "type": "number" },
+        "vehicleType": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "scheduledAt": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "gatewayLive": { "type": "boolean" },
+        "fareEgp": { "type": "number" },
+        "commissionEgp": { "type": "number" },
+        "driverNetEgp": { "type": "number" },
+        "pin": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "arrived", "loaded", "completed", "cancelled"] },
+        "waitingStartedAt": { "type": "string", "format": "date-time" },
+        "photosCount": { "type": "integer" },
+        "photo1Thumb": { "type": "string" },
+        "photo2Thumb": { "type": "string" },
+        "photo3Thumb": { "type": "string" },
+        "photo4Thumb": { "type": "string" },
+        "pinVerified": { "type": "boolean" },
+        "signaturePointsCount": { "type": "integer" },
+        "signedByCustomer": { "type": "boolean" },
+        "cancelFeeEgp": { "type": "number" },
+        "cancelReason": { "type": "string" },
+        "rating": { "type": "integer" },
+        "reviewComment": { "type": "string" },
+        "rated": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "customerId", "customerName", "customerPhone", "pickupArea", "pickupLat", "pickupLng",
+        "dropoffArea", "dropoffLat", "dropoffLng", "distanceKm", "vehicleType", "serviceType",
+        "paymentMethod", "gatewayLive", "fareEgp", "commissionEgp", "driverNetEgp", "pin",
+        "status", "photosCount", "pinVerified", "signaturePointsCount", "signedByCustomer",
+        "cancelFeeEgp", "rated", "createdAt", "updatedAt"
+      ]
+    },
+    "TripMessage": {
+      "title": "TripMessage",
+      "description": "Quick chat message between customer and driver on a trip",
+      "type": "object",
+      "properties": {
+        "tripId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string" },
+        "text": { "type": "string" },
+        "participantUids": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tripId", "senderId", "senderName", "senderRole", "text", "participantUids", "createdAt"]
+    },
+    "DriverReview": {
+      "title": "DriverReview",
+      "description": "Detailed customer rating (1-5 stars) and short comment for a driver",
+      "type": "object",
+      "properties": {
+        "tripId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "stars": { "type": "integer" },
+        "comment": { "type": "string" },
+        "tags": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tripId", "driverId", "customerId", "customerName", "stars", "comment", "tags", "createdAt"]
+    },
+    "WalletTransaction": {
+      "title": "WalletTransaction",
+      "description": "Driver wallet top-up or earnings withdrawal request",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "driverName": { "type": "string" },
+        "type": { "type": "string", "enum": ["topup", "withdrawal"] },
+        "amountEgp": { "type": "number" },
+        "method": { "type": "string", "enum": ["vodafone_cash", "instapay", "bank"] },
+        "accountOrRef": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "adminNote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["driverId", "driverName", "type", "amountEgp", "method", "accountOrRef", "status", "createdAt", "updatedAt"]
+    },
+    "AppPricingConfig": {
+      "title": "AppPricingConfig",
+      "description": "Global dynamic pricing and commission configuration",
+      "type": "object",
+      "properties": {
+        "dieselPriceEgp": { "type": "number" },
+        "baseFareEgp": { "type": "number" },
+        "perKmEgp": { "type": "number" },
+        "commissionPercent": { "type": "number" },
+        "minWalletEgp": { "type": "number" },
+        "cancelFeeEgp": { "type": "number" },
+        "minWithdrawEgp": { "type": "number" },
+        "gatewayLive": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "dieselPriceEgp", "baseFareEgp", "perKmEgp", "commissionPercent",
+        "minWalletEgp", "cancelFeeEgp", "minWithdrawEgp", "gatewayLive", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User role & profile documents"
+    },
+    "/drivers/{driverId}": {
+      "schema": { "$ref": "#/entities/DriverProfile" },
+      "description": "Driver operational profile & public ratings"
+    },
+    "/drivers/{driverId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/DriverPrivateDocs" },
+      "description": "Driver private PII & verification documents"
+    },
+    "/companies/{companyId}": {
+      "schema": { "$ref": "#/entities/CompanyProfile" },
+      "description": "Operating companies"
+    },
+    "/companies/{companyId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/CompanyPrivateDocs" },
+      "description": "Company private legal documents"
+    },
+    "/company_drivers/{inviteId}": {
+      "schema": { "$ref": "#/entities/CompanyDriverInvite" },
+      "description": "Company driver roster entries"
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Rescue & transport trips"
+    },
+    "/trips/{tripId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/TripMessage" },
+      "description": "Quick chat messages for an active trip"
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/DriverReview" },
+      "description": "Detailed customer reviews for drivers"
+    },
+    "/wallet_transactions/{txId}": {
+      "schema": { "$ref": "#/entities/WalletTransaction" },
+      "description": "Wallet top-up and withdrawal requests"
+    },
+    "/app_config/{configId}": {
+      "schema": { "$ref": "#/entities/AppPricingConfig" },
+      "description": "Global pricing & platform rules config"
+    }
+  }
+}

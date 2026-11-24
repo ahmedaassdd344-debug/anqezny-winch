@@ -1,0 +1,6 @@
+{
+  "name": "انقذنى عايز ونش",
+  "description": "منصة انقذنى عايز ونش لإنقاذ ونقل السيارات في محافظة الجيزة — تطبيق متكامل للعملاء والسائقين المستقلين وشركات التشغيل ولوحة الإدارة عبر Firebase Firestore",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
