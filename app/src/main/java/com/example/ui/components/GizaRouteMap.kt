@@ -111,7 +111,6 @@ fun GizaRouteMap(
                     val pPoint = GeoPoint(pickupLat, pickupLng)
                     val dPoint = GeoPoint(dropoffLat, dropoffLng)
 
-                    // Tap listener to pick location directly on real streets
                     val eventsReceiver = object : MapEventsReceiver {
                         override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
                             if (p != null && selectionMode != MapSelectionMode.NONE && onMapTap != null) {
@@ -134,7 +133,6 @@ fun GizaRouteMap(
                     }
                     mapView.overlays.add(MapEventsOverlay(eventsReceiver))
 
-                    // Route polyline between pickup and dropoff
                     val line = Polyline().apply {
                         setPoints(listOf(pPoint, dPoint))
                         outlinePaint.color = if (isLoadedPhase) android.graphics.Color.RED else android.graphics.Color.DKGRAY
@@ -142,7 +140,6 @@ fun GizaRouteMap(
                     }
                     mapView.overlays.add(line)
 
-                    // Pickup marker (أ)
                     val pickupMarker = Marker(mapView).apply {
                         position = pPoint
                         title = "موقع الاستلام (أ): $pickupLabel"
@@ -150,7 +147,6 @@ fun GizaRouteMap(
                     }
                     mapView.overlays.add(pickupMarker)
 
-                    // Dropoff marker (ب)
                     val dropoffMarker = Marker(mapView).apply {
                         position = dPoint
                         title = "وجهة النقل (ب): $dropoffLabel"
@@ -234,3 +230,42 @@ fun GizaRouteMap(
                         .clip(CircleShape)
                         .background(AnqeznyCrimson),
                     contentAlignment = Alignment.Center
+                ) {
+                    Text("ب", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+text = "إلى: $dropoffLabel",
+style = MaterialTheme.typography.bodyMedium,
+color = AnqeznyInk,
+fontWeight = FontWeight.SemiBold
+)
+}
+if (stageBanner != null) {
+Spacer(Modifier.height(2.dp))
+Row(
+verticalAlignment = Alignment.CenterVertically,
+modifier = Modifier
+.fillMaxWidth()
+.clip(RoundedCornerShape(8.dp))
+.background(if (isLoadedPhase) Color(0xFFFEE2E2) else Color(0xFFD1FAE5))
+.padding(horizontal = 10.dp, vertical = 6.dp)
+) {
+Icon(
+imageVector = if (isLoadedPhase) Icons.Default.LocalShipping else Icons.Default.LocationOn,
+contentDescription = null,
+tint = if (isLoadedPhase) AnqeznyCrimson else AnqeznyEmerald,
+modifier = Modifier.size(16.dp)
+)
+Spacer(Modifier.width(6.dp))
+Text(
+text = stageBanner,
+style = MaterialTheme.typography.labelMedium,
+color = if (isLoadedPhase) AnqeznyCrimson else AnqeznyEmerald,
+fontWeight = FontWeight.Bold
+)
+}
+}
+}
+}
+}
