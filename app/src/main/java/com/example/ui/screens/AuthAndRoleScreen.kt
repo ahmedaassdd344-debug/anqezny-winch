@@ -102,26 +102,17 @@ import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
-
 @Composable
 fun GoogleAuthSignInScreen(
     onAuthSuccess: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val credentialManager = remember { CredentialManager.create(context) }
-    var isLoading by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        attemptAutoSignIn(
-            context = context,
-            credentialManager = credentialManager,
-            onAuthSuccess = onAuthSuccess,
-            onUnauthenticated = {},
-            scope = scope
-        )
+        Firebase.auth.signInAnonymously()
+            .addOnSuccessListener { onAuthSuccess() }
+            .addOnFailureListener { e -> errorMsg = e.localizedMessage }
     }
 
     Box(
@@ -156,108 +147,37 @@ fun GoogleAuthSignInScreen(
                             .clip(RoundedCornerShape(16.dp))
                     )
                     Spacer(Modifier.height(16.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = AnqeznyCrimsonContainer
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = AnqeznyCrimson,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = "محافظة الجيزة — إنقاذ ونقل السيارات 24/7",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = AnqeznyCrimson,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(10.dp))
                     Text(
                         text = "انقذنى عايز ونش",
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = AnqeznyCharcoal,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        color = AnqeznyInk
                     )
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "تأكيد لمرة واحدة فقط بضغطة زر — بعدها يفتح التطبيق مباشرة لطلب الونش أو لصفحتك الخاصة كسائق بدون خطوات متكررة.",
+                        text = "جاري الدخول المباشر للمنصة...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = AnqeznyInkSecondary,
                         textAlign = TextAlign.Center
                     )
-
                     Spacer(Modifier.height(18.dp))
-
                     if (errorMsg != null) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = AnqeznyCrimsonContainer,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 12.dp)
+                        Text(text = errorMsg ?: "", color = AnqeznyCrimson, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                errorMsg = null
+                                Firebase.auth.signInAnonymously()
+                                    .addOnSuccessListener { onAuthSuccess() }
+                                    .addOnFailureListener { e -> errorMsg = e.localizedMessage }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
+                            modifier = Modifier.fillMaxWidth().height(52.dp)
                         ) {
-                            Text(
-                                text = errorMsg ?: "",
-                                color = AnqeznyCrimson,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(12.dp)
-                            )
+                            Text("دخول مباشر الآن", fontWeight = FontWeight.Bold, color = Color.White)
                         }
-                    }
-
-                    Button(
-                        onClick = {
-                            isLoading = true
-                            errorMsg = null
-                            onGoogleSignInClicked(
-                                context = context,
-                                credentialManager = credentialManager,
-                                onAuthSuccess = {
-                                    isLoading = false
-                                    onAuthSuccess()
-                                },
-                                onAuthError = { msg ->
-                                    isLoading = false
-                                    errorMsg = msg
-                                },
-                                scope = scope,
-                                onAuthCancelled = {
-                                    isLoading = false
-                                }
-                            )
-                        },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp)
-                            .testTag("google_sign_in_button")
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                text = "متابعة سريعة بضغطة واحدة (Google)",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    } else {
+                        CircularProgressIndicator(color = AnqeznyCrimson)
                     }
                 }
             }
