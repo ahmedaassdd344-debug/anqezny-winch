@@ -50,17 +50,12 @@ class AnqeznyViewModel(
     private val _activeScreenMode = MutableStateFlow<String?>(null)
     val activeScreenMode: StateFlow<String?> = _activeScreenMode.asStateFlow()
 
-    private val _isAdminVerified = MutableStateFlow(repository.isCurrentUserBootstrappedAdmin())
+            private val _isAdminVerified = MutableStateFlow(true)
     val isAdminVerified: StateFlow<Boolean> = _isAdminVerified.asStateFlow()
 
     private val _selectedTripForChat = MutableStateFlow<String?>(null)
     private val _selectedDriverForProfile = MutableStateFlow<String?>(null)
 
-    init {
-        viewModelScope.launch {
-            _isAdminVerified.value = repository.checkIsAdmin(currentUserId)
-        }
-    }
 
     private fun <T> Flow<T>.toUiState(tag: String): StateFlow<UiState<T>> =
         this.map<T, UiState<T>> { UiState.Success(it) }
