@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "495947043954",
+    "project_id": "anqizny-ayez-winsh",
+    "storage_bucket": "anqizny-ayez-winsh.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495947043954:android:136763d1ee35526f5f9eeb",
+        "android_client_info": {
+          "package_name": "com.aistudio.anqezny.krmwqz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "495947043954-sn2tj9uksuqf66l4hriv3qot893db9rs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aistudio.anqezny.krmwqz",
+            "certificate_hash": "b121745fb3f6a0591fb1ac38dcb1f5922ee646d3"
+          }
+        },
+        {
+          "client_id": "495947043954-gd1l3tm9atkglampshdkud34a2arkpq5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA75kWdpg2_Z1y6crfCjgz4QvoDz1ySn6w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "495947043954-gd1l3tm9atkglampshdkud34a2arkpq5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

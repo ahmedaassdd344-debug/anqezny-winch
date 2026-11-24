@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">انقذنى عايز ونش</string>
+    <string name="app_subtitle">منصة إنقاذ ونقل السيارات في محافظة الجيزة</string>
+    <string name="sign_in_google">تسجيل الدخول عبر Google</string>
+    <string name="terms_title">الشروط والأحكام وسياسة الاستخدام</string>
+    <string name="giza_coverage_notice">الخدمة متاحة حاليًا داخل محافظة الجيزة (14 منطقة + التحديد الحر على الخريطة)</string>
+    <string name="error_network_retry">حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.</string>
+</resources>
