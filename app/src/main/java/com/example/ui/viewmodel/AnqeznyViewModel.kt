@@ -200,37 +200,43 @@ class AnqeznyViewModel(
             res
         }
     }
-
-        fun resumeDriverPortal(name: String, phone: String) {
+    fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
             val cleanPhone = phone.trim()
             val db = FirebaseFirestore.getInstance()
-            val query = db.collection("drivers")
+
+            val docsQuery = db.collection("driverPrivateDocs")
                 .whereEqualTo("phone", cleanPhone)
                 .limit(1)
                 .get()
                 .await()
 
-            if (!query.isEmpty) {
-                val doc = query.documents.first()
-                val driverName = doc.getString("name") ?: name
-                val data = doc.data?.toMutableMap() ?: mutableMapOf()
-                data["id"] = currentUserId
-                db.collection("drivers").document(currentUserId).set(data).await()
-                repository.persistActiveRole("driver", driverName, cleanPhone)
-                _activeScreenMode.value = "driver"
-                Result.success(Unit)
+            val targetDriverId = if (!docsQuery.isEmpty) {
+                docsQuery.documents.first().id
             } else {
-                val res = repository.persistActiveRole("driver", name, cleanPhone)
-                if (res.isSuccess) _activeScreenMode.value = "driver"
-                res
+                val driverQuery = db.collection("drivers")
+                    .whereEqualTo("phone", cleanPhone)
+                    .limit(1)
+                    .get()
+                    .await()
+                driverQuery.documents.firstOrNull()?.id
             }
-        }
-    }
-    fun resumeCompanyPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحة الشركة") {
-            val res = repository.persistActiveRole("company", name, phone)
-            if (res.isSuccess) _activeScreenMode.value = "company"
+
+            if (targetDriverId != null) {
+                val driverSnap = db.collection("drivers").document(targetDriverId).get().await()
+                if (driverSnap.exists()) {
+                    val data = driverSnap.data?.toMutableMap() ?: mutableMapOf()
+                    data["id"] = currentUserId
+                    db.collection("drivers").document(currentUserId).set(data).await()
+                    val foundName = driverSnap.getString("name") ?: name
+                    repository.persistActiveRole("driver", foundName, cleanPhone)
+                    _activeScreenMode.value = "driver"
+                    return@launchAction Result.success(Unit)
+                }
+            }
+
+            val res = repository.persistActiveRole("driver", name, cleanPhone)
+            if (res.isSuccess) _activeScreenMode.value = "driver"
             res
         }
     }
