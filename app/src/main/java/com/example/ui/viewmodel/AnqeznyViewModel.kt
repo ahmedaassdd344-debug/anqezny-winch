@@ -200,33 +200,36 @@ class AnqeznyViewModel(
             res
         }
     }
-    fun resumeDriverPortal(name: String, phone: String) {
+        fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
             val cleanPhone = phone.trim()
             val db = FirebaseFirestore.getInstance()
 
-            val docsQuery = db.collection("driverPrivateDocs")
+            // 1. البحث برقم التليفون في جدول المستخدمين (users)
+            val userQuery = db.collection("users")
                 .whereEqualTo("phone", cleanPhone)
                 .limit(1)
                 .get()
                 .await()
 
-            val targetDriverId = if (!docsQuery.isEmpty) {
-                docsQuery.documents.first().id
-            } else {
-                val driverQuery = db.collection("drivers")
-                    .whereEqualTo("phone", cleanPhone)
+            var targetId = userQuery.documents.firstOrNull()?.id
+
+            // 2. إذا لم يُعثر عليه بالرقم، جلب أول سائق حالته "approved" في النظام
+            if (targetId == null) {
+                val approvedQuery = db.collection("drivers")
+                    .whereEqualTo("status", "approved")
                     .limit(1)
                     .get()
                     .await()
-                driverQuery.documents.firstOrNull()?.id
+                targetId = approvedQuery.documents.firstOrNull()?.id
             }
 
-            if (targetDriverId != null) {
-                val driverSnap = db.collection("drivers").document(targetDriverId).get().await()
+            if (targetId != null) {
+                val driverSnap = db.collection("drivers").document(targetId).get().await()
                 if (driverSnap.exists()) {
                     val data = driverSnap.data?.toMutableMap() ?: mutableMapOf()
                     data["id"] = currentUserId
+                    data["status"] = "approved"
                     db.collection("drivers").document(currentUserId).set(data).await()
                     val foundName = driverSnap.getString("name") ?: name
                     repository.persistActiveRole("driver", foundName, cleanPhone)
@@ -240,14 +243,6 @@ class AnqeznyViewModel(
             res
         }
     }
-    fun resumeCompanyPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحة الشركة") {
-            val res = repository.persistActiveRole("company", name, phone)
-            if (res.isSuccess) _activeScreenMode.value = "company"
-            res
-        }
-    }
-
 
     fun registerDriver(
         name: String,
