@@ -401,36 +401,39 @@ fun RoleSelectionScreen(
                     }
                 }
 
-                // Dedicated Returning Driver Portal Card (if driver already registered once!)
-                if (existingDriver != null) {
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.5.dp, if (existingDriver.status == "approved") AnqeznyEmerald else AnqeznyAmber),
-                        modifier = Modifier.fillMaxWidth()
+                               // Dedicated Returning Driver Portal Card (ALWAYS VISIBLE for quick phone login!)
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = Color.White,
+                    border = BorderStroke(
+                        1.5.dp,
+                        if (existingDriver?.status == "approved") AnqeznyEmerald else AnqeznyCharcoal
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Verified,
-                                        contentDescription = null,
-                                        tint = if (existingDriver.status == "approved") AnqeznyEmerald else AnqeznyAmber
-                                    )
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        text = "صفحة السائق الخاصة بك",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Verified,
+                                    contentDescription = null,
+                                    tint = if (existingDriver?.status == "approved") AnqeznyEmerald else AnqeznyCharcoal
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = "دخول السائقين المسجلين",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            if (existingDriver != null) {
                                 Surface(
                                     shape = RoundedCornerShape(8.dp),
                                     color = if (existingDriver.status == "approved") AnqeznyEmeraldContainer else AnqeznyAmberContainer
@@ -449,7 +452,9 @@ fun RoleSelectionScreen(
                                     )
                                 }
                             }
+                        }
 
+                        if (existingDriver != null) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -469,55 +474,53 @@ fun RoleSelectionScreen(
                                     )
                                 }
                             }
-
-                            // Simple Name + Phone confirmation (NO documents, NO OTP!)
-                            OutlinedTextField(
-                                value = quickDriverName,
-                                onValueChange = { quickDriverName = it },
-                                label = { Text("الاسم") },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
+                        } else {
+                            Text(
+                                text = "لو سجلت أوراقك قبل كده، اكتب رقم موبايلك وادخل فوراً لاستقبال الطلبات",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AnqeznyInkSecondary
                             )
-                            OutlinedTextField(
-                                value = quickDriverPhone,
-                                onValueChange = { quickDriverPhone = it },
-                                label = { Text("رقم الموبايل") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                        }
 
-                            Button(
-                                onClick = {
-                                    val finalName = quickDriverName.trim().ifBlank { existingDriver.name }
-                                    val finalPhone = quickDriverPhone.trim().ifBlank { existingDriverDocs?.phone ?: "" }
-                                    if (finalName.length < 2 || finalPhone.length < 6) {
-                                        onShowMessage("أدخل الاسم ورقم الموبايل للدخول")
-                                    } else {
-                                        onResumeDriver(finalName, finalPhone)
-                                    }
-                                },
-                                enabled = !isBusy,
-                                colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCharcoal),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp)
-                                    .testTag("resume_driver_button")
-                            ) {
-                                Text("دخول لصفحتي الخاصة ومحفظتي")
-                            }
+                        OutlinedTextField(
+                            value = quickDriverPhone,
+                            onValueChange = { quickDriverPhone = it },
+                            label = { Text("رقم موبايل السائق المسجل (01xxxxxxxxx)") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                            if (existingDriver.status == "rejected") {
-                                TextButton(
-                                    onClick = {
-                                        partnerType = 0
-                                        selectedEntry = "partner_register"
-                                    },
-                                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                                ) {
-                                    Text("تعديل وإعادة إرسال الأوراق", color = AnqeznyCrimson)
+                        Button(
+                            onClick = {
+                                val finalPhone = quickDriverPhone.trim().ifBlank { existingDriverDocs?.phone ?: "" }
+                                val finalName = quickDriverName.trim().ifBlank { existingDriver?.name ?: "كابتن ونش" }
+                                if (finalPhone.length < 10) {
+                                    onShowMessage("أدخل رقم الموبايل المسجل للدخول (11 رقم)")
+                                } else {
+                                    onResumeDriver(finalName, finalPhone)
                                 }
+                            },
+                            enabled = !isBusy,
+                            colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCharcoal),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp)
+                                .testTag("resume_driver_button")
+                        ) {
+                            Text("دخول للوحة السائق واستقبال الطلبات", fontWeight = FontWeight.Bold)
+                        }
+
+                        if (existingDriver?.status == "rejected") {
+                            TextButton(
+                                onClick = {
+                                    partnerType = 0
+                                    selectedEntry = "partner_register"
+                                },
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            ) {
+                                Text("تعديل وإعادة إرسال الأوراق", color = AnqeznyCrimson)
                             }
                         }
                     }
