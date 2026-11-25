@@ -1,4 +1,6 @@
 package com.example.ui.viewmodel
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -199,21 +201,33 @@ class AnqeznyViewModel(
         }
     }
 
-    fun resumeDriverPortal(name: String, phone: String) {
+        fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
-            val res = repository.persistActiveRole("driver", name, phone)
-            if (res.isSuccess) _activeScreenMode.value = "driver"
-            res
+            val cleanPhone = phone.trim()
+            val db = FirebaseFirestore.getInstance()
+            val query = db.collection("drivers")
+                .whereEqualTo("phone", cleanPhone)
+                .limit(1)
+                .get()
+                .await()
+
+            if (!query.isEmpty) {
+                val doc = query.documents.first()
+                val driverName = doc.getString("name") ?: name
+                val data = doc.data?.toMutableMap() ?: mutableMapOf()
+                data["id"] = currentUserId
+                db.collection("drivers").document(currentUserId).set(data).await()
+                repository.persistActiveRole("driver", driverName, cleanPhone)
+                _activeScreenMode.value = "driver"
+                Result.success(Unit)
+            } else {
+                val res = repository.persistActiveRole("driver", name, cleanPhone)
+                if (res.isSuccess) _activeScreenMode.value = "driver"
+                res
+            }
         }
     }
 
-    fun resumeCompanyPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحة الشركة") {
-            val res = repository.persistActiveRole("company", name, phone)
-            if (res.isSuccess) _activeScreenMode.value = "company"
-            res
-        }
-    }
 
     fun registerDriver(
         name: String,
