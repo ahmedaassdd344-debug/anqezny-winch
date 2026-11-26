@@ -139,120 +139,24 @@ fun AdminScreen(
         ) {
             when (selectedTab) {
                 0 -> {
-                    val approvedDrivers = drivers.filter { it.status == "approved" }
-                    var custName by remember { mutableStateOf("") }
-                    var custPhone by remember { mutableStateOf("") }
-                    var pickupArea by remember { mutableStateOf(GIZA_AREAS[1]) }
-                    var dropoffArea by remember { mutableStateOf(GIZA_AREAS[9]) }
-                    var pickupExp by remember { mutableStateOf(false) }
-                    var dropoffExp by remember { mutableStateOf(false) }
-                    var drvExp by remember { mutableStateOf(false) }
-                    var selectedDriver by remember { mutableStateOf<DriverProfile?>(approvedDrivers.firstOrNull()) }
-
-                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("إضافة طلب هاتفي وإسناده لسائق", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            OutlinedTextField(value = custName, onValueChange = { custName = it }, label = { Text("اسم العميل") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                            OutlinedTextField(
-                                value = custPhone,
-                                onValueChange = { custPhone = it },
-                                label = { Text("موبايل العميل") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                ExposedDropdownMenuBox(expanded = pickupExp, onExpandedChange = { pickupExp = !pickupExp }, modifier = Modifier.weight(1f)) {
-                                    OutlinedTextField(
-                                        value = pickupArea.nameAr,
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("الاستلام") },
-                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = pickupExp) },
-                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
-                                    )
-                                    ExposedDropdownMenu(expanded = pickupExp, onDismissRequest = { pickupExp = false }) {
-                                        GIZA_AREAS.forEach { a ->
-                                            DropdownMenuItem(text = { Text(a.nameAr) }, onClick = { pickupArea = a; pickupExp = false })
-                                        }
-                                    }
-                                }
-                                ExposedDropdownMenuBox(expanded = dropoffExp, onExpandedChange = { dropoffExp = !dropoffExp }, modifier = Modifier.weight(1f)) {
-                                    OutlinedTextField(
-                                        value = dropoffArea.nameAr,
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("التسليم") },
-                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropoffExp) },
-                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
-                                    )
-                                    ExposedDropdownMenu(expanded = dropoffExp, onDismissRequest = { dropoffExp = false }) {
-                                        GIZA_AREAS.forEach { a ->
-                                            DropdownMenuItem(text = { Text(a.nameAr) }, onClick = { dropoffArea = a; dropoffExp = false })
-                                        }
-                                    }
-                                }
-                            }
-
-                            ExposedDropdownMenuBox(expanded = drvExp, onExpandedChange = { drvExp = !drvExp }) {
-                                OutlinedTextField(
-                                    value = selectedDriver?.name ?: "اختر سائقاً معتمداً",
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("إسناد للسائق") },
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = drvExp) },
-                                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
-                                )
-                                ExposedDropdownMenu(expanded = drvExp, onDismissRequest = { drvExp = false }) {
-                                    approvedDrivers.forEach { d ->
-                                        DropdownMenuItem(text = { Text("${d.name} (${d.plateNumber})") }, onClick = { selectedDriver = d; drvExp = false })
-                                    }
-                                }
-                            }
-
-                            Button(
-                                onClick = {
-                                    val drv = selectedDriver
-                                    if (custName.trim().length < 2 || custPhone.trim().length < 6) {
-                                        onShowMessage("أدخل اسم وموبايل العميل")
-                                    } else if (drv == null) {
-                                        onShowMessage("لا يوجد سائق معتمد متاح للإسناد")
-                                    } else {
-                                        val dist = calculateDistanceKm(pickupArea.lat, pickupArea.lng, dropoffArea.lat, dropoffArea.lng)
-                                        val pricing = calculateTripPricing(dist, VehicleType.SEDAN, ServiceType.INSTANT, pricingConfig)
-                                        onDispatchPhoneTrip(
-                                            custName, custPhone,
-                                            pickupArea.nameAr, pickupArea.lat, pickupArea.lng,
-                                            dropoffArea.nameAr, dropoffArea.lat, dropoffArea.lng,
-                                            dist, VehicleType.SEDAN.labelAr, ServiceType.INSTANT.labelAr,
-                                            pricing.totalFareEgp, pricing.commissionEgp, pricing.driverNetEgp, drv
-                                        )
-                                        custName = ""; custPhone = ""
-                                    }
-                                },
-                                enabled = !isBusy,
-                                colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
-                                modifier = Modifier.fillMaxWidth().testTag("admin_dispatch_trip_button")
-                            ) {
-                                Text("إرسال وإسناد الطلب الهاتفي")
-                            }
-                        }
-                    }
-
                     Text("الرحلات الحية والتقييمات", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    trips.forEach { t ->
-                        Surface(shape = RoundedCornerShape(14.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("${t.customerName} (${t.pickupArea} ← ${t.dropoffArea})", fontWeight = FontWeight.Bold)
-                                    Text("${t.fareEgp.roundToInt()} ج.م", color = AnqeznyCrimson, fontWeight = FontWeight.Bold)
-                                }
-                                Text("السائق: ${t.driverName ?: "غير مسند"} • الحالة: ${tripStatusAr(t.status)}", style = MaterialTheme.typography.bodyMedium, color = AnqeznyInkSecondary)
-                                if (t.rated && t.rating != null) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Star, null, tint = AnqeznyStarGold, modifier = Modifier.size(16.dp))
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("${t.rating}/5 ${t.reviewComment?.let { "• $it" } ?: ""}", style = MaterialTheme.typography.labelMedium)
+                    if (trips.isEmpty()) {
+                        Text("لا توجد رحلات مسجلة حالياً.", color = AnqeznyInkSecondary)
+                    } else {
+                        trips.forEach { t ->
+                            Surface(shape = RoundedCornerShape(14.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
+                                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("${t.customerName} (${t.pickupArea} ← ${t.dropoffArea})", fontWeight = FontWeight.Bold)
+                                        Text("${t.fareEgp.roundToInt()} ج.م", color = AnqeznyCrimson, fontWeight = FontWeight.Bold)
+                                    }
+                                    Text("السائق: ${t.driverName ?: "غير مسند"} • الحالة: ${tripStatusAr(t.status)}", style = MaterialTheme.typography.bodyMedium, color = AnqeznyInkSecondary)
+                                    if (t.rated && t.rating != null) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.Star, null, tint = AnqeznyStarGold, modifier = Modifier.size(16.dp))
+                                            Spacer(Modifier.width(4.dp))
+                                            Text("${t.rating}/5 ${t.reviewComment?.let { "• $it" } ?: ""}", style = MaterialTheme.typography.labelMedium)
+                                        }
                                     }
                                 }
                             }
@@ -265,6 +169,62 @@ fun AdminScreen(
                         Text("لا يوجد سائقون مسجلون بعد.", color = AnqeznyInkSecondary)
                     } else {
                         drivers.forEach { drv ->
+                            var showDocsDialog by remember(drv.userId) { mutableStateOf(false) }
+                            var docsInfo by remember(drv.userId) { mutableStateOf<Map<String, Any>?>(null) }
+
+                            if (showDocsDialog) {
+                                androidx.compose.material3.AlertDialog(
+                                    onDismissRequest = { showDocsDialog = false },
+                                    title = { Text("مستندات السائق: ${drv.name}", fontWeight = FontWeight.Bold) },
+                                    text = {
+                                        Column(
+                                            modifier = Modifier.verticalScroll(rememberScrollState()),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            if (docsInfo == null) {
+                                                Text("جاري تحميل الأوراق والصور...")
+                                            } else if (docsInfo!!.isEmpty()) {
+                                                Text("لم يقم السائق برفع صور مستندات بعد.", color = AnqeznyCrimson)
+                                            } else {
+                                                Text("الموبايل: ${docsInfo!!["phone"] ?: "غير مسجل"}")
+                                                Text("الرقم القومي: ${docsInfo!!["nationalId"] ?: "غير مسجل"}")
+                                                Text("رقم الرخصة: ${docsInfo!!["licenseNumber"] ?: "غير مسجل"} (تنتهي: ${docsInfo!!["licenseExpiry"] ?: "-"})")
+                                                val docKeys = listOf(
+                                                    "docIdThumb" to "1. صورة البطاقة الشخصية",
+                                                    "docDriverLicenseThumb" to "2. صورة رخصة القيادة",
+                                                    "docVehicleLicenseThumb" to "3. صورة رخصة الونش",
+                                                    "docTruckPhotoThumb" to "4. صورة الونش"
+                                                )
+                                                docKeys.forEach { (key, title) ->
+                                                    val b64 = docsInfo!![key] as? String
+                                                    Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                                                    if (!b64.isNullOrBlank()) {
+                                                        val bmp = remember(b64) {
+                                                            try {
+                                                                val bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
+                                                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                                                            } catch (_: Exception) { null }
+                                                        }
+                                                        if (bmp != null) {
+                                                            androidx.compose.foundation.Image(
+                                                                bitmap = androidx.compose.ui.graphics.asImageBitmap(bmp),
+                                                                contentDescription = title,
+                                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                                            )
+                                                        }
+                                                    } else {
+                                                        Text("— لم تُرفع صورة —", color = AnqeznyInkSecondary, style = MaterialTheme.typography.bodySmall)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    confirmButton = {
+                                        Button(onClick = { showDocsDialog = false }) { Text("إغلاق") }
+                                    }
+                                )
+                            }
+
                             Surface(shape = RoundedCornerShape(14.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -277,6 +237,26 @@ fun AdminScreen(
                                     }
                                     Text("${drv.winchType} • لوحة: ${drv.plateNumber} • ${drv.area}", style = MaterialTheme.typography.bodyMedium, color = AnqeznyInkSecondary)
                                     Text("محفظة: ${drv.walletBalance.roundToInt()} ج.م • أرباح: ${drv.withdrawableBalance.roundToInt()} ج.م • تقييم: ${drv.ratingAvg} ★ (${drv.ratingCount})", style = MaterialTheme.typography.labelMedium)
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            showDocsDialog = true
+                                            com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                                .collection("drivers").document(drv.userId)
+                                                .collection("private").document("docs")
+                                                .get()
+                                                .addOnSuccessListener { snap ->
+                                                    docsInfo = snap.data ?: emptyMap()
+                                                }
+                                                .addOnFailureListener {
+                                                    docsInfo = emptyMap()
+                                                }
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("مراجعة الأوراق والصور المرفوعة", color = AnqeznyCharcoal)
+                                    }
+
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         if (drv.status != "approved") {
                                             Button(
@@ -288,18 +268,18 @@ fun AdminScreen(
                                         }
                                         if (drv.status != "rejected") {
                                             OutlinedButton(
-                                                onClick = { onUpdateDriverStatus(drv.userId, "rejected", "يرجى مراجعة وضوح الأوراق") },
-                                                enabled = !isBusy,
-                                                modifier = Modifier.weight(1f)
-                                            ) { Text("رفض / إيقاف", color = AnqeznyCrimson) }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
 
+onClick = { onUpdateDriverStatus(drv.userId, "rejected", "يرجى مراجعة وضوح الأوراق") },
+enabled = !isBusy,
+modifier = Modifier.weight(1f)
+) { Text("رفض / إيقاف", color = AnqeznyCrimson) }
+}
+}
+}
+}
+}
+}
+}
                 2 -> {
                     if (companies.isEmpty()) {
                         Text("لا توجد شركات مسجلة بعد.", color = AnqeznyInkSecondary)
