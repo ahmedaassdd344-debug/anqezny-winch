@@ -199,47 +199,43 @@ class AnqeznyViewModel(
         }
     }
 
-    fun resumeDriverPortal(name: String, phone: String) {
+       fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
-            val cleanPhone = phone.trim()
-            val db = FirebaseFirestore.getInstance()
+            val digitsOnly = phone.filter { it.isDigit() }
+            val last10 = if (digitsOnly.length >= 10) digitsOnly.takeLast(10) else digitsOnly
+            val cleanName = name.trim()
 
-            val byDriverPhone = db.collection("drivers")
-                .whereEqualTo("phone", cleanPhone)
-                .get()
-                .await()
-
-            var matchedDoc = byDriverPhone.documents.firstOrNull { it.getString("status") == "approved" }
-                ?: byDriverPhone.documents.firstOrNull()
-
-            if (matchedDoc == null) {
-                val userQuery = db.collection("users")
-                    .whereEqualTo("phone", cleanPhone)
-                    .limit(1)
-                    .get()
-                    .await()
-                val uidFromUser = userQuery.documents.firstOrNull()?.id
-                if (uidFromUser != null) {
-                    val dSnap = db.collection("drivers").document(uidFromUser).get().await()
-                    if (dSnap.exists()) matchedDoc = dSnap
-                }
+            if (last10.length < 8 && cleanName.length < 2) {
+                return@launchAction Result.failure(IllegalArgumentException("يرجى إدخال رقم الموبايل أو الاسم المسجل"))
             }
 
-            if (matchedDoc != null && matchedDoc.exists()) {
-                val data = matchedDoc.data?.toMutableMap() ?: mutableMapOf()
-                data["userId"] = currentUserId
-                data["id"] = currentUserId
-                data["phone"] = cleanPhone
-                db.collection("drivers").document(currentUserId).set(data).await()
-                val foundName = matchedDoc.getString("name") ?: name
-                repository.persistActiveRole("driver", foundName, cleanPhone)
+            // البحث في قائمة السائقين المحمّلة بالفعل من قاعدة بيانات التطبيق الصحيحة
+            val loadedDrivers = (adminAllDriversState.value as? UiState.Success)?.data.orEmpty() +
+                (approvedDriversState.value as? UiState.Success)?.data.orEmpty()
+
+            val matchedDriver = loadedDrivers.firstOrNull { d ->
+                val p = d.phone.filter { it.isDigit() }
+                (last10.length >= 8 && p.isNotEmpty() && p.endsWith(last10)) ||
+                    (cleanName.length >= 2 && d.name.trim().equals(cleanName, ignoreCase = true))
+            }
+
+            if (matchedDriver != null) {
+                repository.persistActiveRole("driver", matchedDriver.name, phone.trim())
                 _activeScreenMode.value = "driver"
                 return@launchAction Result.success(Unit)
             } else {
-                return@launchAction Result.failure(IllegalArgumentException("رقم الموبايل غير مسجل كسائق — سجّل أوراقك أولاً"))
+                // محاولة أخيرة عبر حفظ الدور إذا كان مسجلاً في الجلسة الحالية
+                val existing = (driverProfileState.value as? UiState.Success)?.data
+                if (existing != null) {
+                    repository.persistActiveRole("driver", existing.name, phone.trim())
+                    _activeScreenMode.value = "driver"
+                    return@launchAction Result.success(Unit)
+                }
+                return@launchAction Result.failure(IllegalArgumentException("لم يتم العثور على سائق بهذا الرقم — تأكد من الرقم أو سجّل كسائق جديد"))
             }
         }
     }
+
     fun resumeCompanyPortal(name: String, phone: String) {
         launchAction("تم فتح صفحة الشركة") {
             val res = repository.persistActiveRole("company", name, phone)
