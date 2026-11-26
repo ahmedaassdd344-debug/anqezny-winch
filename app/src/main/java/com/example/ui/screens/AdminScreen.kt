@@ -43,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -209,7 +208,8 @@ fun AdminScreen(
                                                         }
                                                         if (bmp != null) {
                                                             androidx.compose.foundation.Image(
-                                                                bitmap = androidx.compose.ui.graphics.asImageBitmap(bmp),
+                                                               bitmap = bmp.asImageBitmap(),
+
                                                                 contentDescription = title,
                                                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                                                             )
