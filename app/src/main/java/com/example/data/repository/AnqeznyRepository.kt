@@ -292,74 +292,7 @@ class AnqeznyRepository(
             if (existingSnap.exists()) {
                 val updates = mutableMapOf<String, Any>(
                     "name" to name.trim().take(80),
-                        fun resumeDriverPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحتك الخاصة كسائق") {
-            val cleanPhone = phone.trim()
-            val db = FirebaseFirestore.getInstance()
-
-            val byDriverPhone = db.collection("drivers")
-                .whereEqualTo("phone", cleanPhone)
-                .get()
-                .await()
-
-            var matchedDoc = byDriverPhone.documents.firstOrNull { it.getString("status") == "approved" }
-                ?: byDriverPhone.documents.firstOrNull()
-
-            if (matchedDoc == null) {
-                val userQuery = db.collection("users")
-                    .whereEqualTo("phone", cleanPhone)
-                    .limit(1)
-                    .get()
-                    .await()
-                val uidFromUser = userQuery.documents.firstOrNull()?.id
-                if (uidFromUser != null) {
-                    val dSnap = db.collection("drivers").document(uidFromUser).get().await()
-                    if (dSnap.exists()) matchedDoc = dSnap
-                }
-            }
-
-            if (matchedDoc == null) {
-                val privQuery = db.collectionGroup("private")
-                    .whereEqualTo("phone", cleanPhone)
-                    .limit(1)
-                    .get()
-                    .await()
-                val parentDriverRef = privQuery.documents.firstOrNull()?.reference?.parent?.parent
-                if (parentDriverRef != null) {
-                    val dSnap = parentDriverRef.get().await()
-                    if (dSnap.exists()) matchedDoc = dSnap
-                }
-            }
-
-            if (matchedDoc != null && matchedDoc.exists()) {
-                val data = matchedDoc.data?.toMutableMap() ?: mutableMapOf()
-                data["userId"] = currentUserId
-                data["id"] = currentUserId
-                data["phone"] = cleanPhone
-                db.collection("drivers").document(currentUserId).set(data).await()
-                val foundName = matchedDoc.getString("name") ?: name
-
-                // ربط أي رحلة نشطة خاصة بهذا السائق بالجلسة الحالية ليكملها فوراً
-                val activeTripsSnap = db.collection("trips")
-                    .whereEqualTo("driverName", foundName)
-                    .get()
-                    .await()
-                for (tripDoc in activeTripsSnap.documents) {
-                    val st = tripDoc.getString("status")
-                    if (st in listOf("accepted", "arrived", "loaded")) {
-                        tripDoc.reference.update("driverId", currentUserId).await()
-                    }
-                }
-
-                repository.persistActiveRole("driver", foundName, cleanPhone)
-                _activeScreenMode.value = "driver"
-                return@launchAction Result.success(Unit)
-            } else {
-                return@launchAction Result.failure(IllegalArgumentException("رقم الموبايل غير مسجل كسائق — سجّل أوراقك أولاً"))
-            }
-        }
-    }
-
+                    "phone" to phone.trim().take(20),
                     "winchType" to winchType.trim().take(80),
                     "plateNumber" to plateNumber.trim().take(30),
                     "area" to area.trim().take(60),
@@ -376,6 +309,7 @@ class AnqeznyRepository(
                 val publicPayload = mapOf(
                     "userId" to uid,
                     "name" to name.trim().take(80),
+                    "phone" to phone.trim().take(20),
                     "winchType" to winchType.trim().take(80),
                     "plateNumber" to plateNumber.trim().take(30),
                     "area" to area.trim().take(60),
