@@ -236,9 +236,10 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                     onShowMessage = viewModel::showFeedback
                 )
 
-                "driver" -> DriverScreen(
-                    driver = driverProfile,
+                               "driver" -> DriverScreen(
+                    driver = driverProfile ?: approvedDrivers.firstOrNull(),
                     driverPrivateDocs = driverPrivateDocs,
+
                     myReviewsState = myDriverReviewsState,
                     pricingConfig = pricingConfig,
                     pendingTripsState = pendingTripsState,
