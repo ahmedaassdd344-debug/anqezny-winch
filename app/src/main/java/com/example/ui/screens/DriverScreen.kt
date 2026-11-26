@@ -143,7 +143,22 @@ fun DriverScreen(
         TermsDialog(onDismiss = { showTerms = false })
     }
 
-    if (driver == null || driver.status != "approved") {
+        if (driver == null) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(AnqeznyBackground),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            LinearProgressIndicator(color = AnqeznyCrimson)
+            Spacer(Modifier.height(12.dp))
+            Text("جاري فتح لوحة السائق المعتمد...", style = MaterialTheme.typography.bodyMedium)
+        }
+        return
+    }
+
+    if (driver.status == "rejected" || driver.status == "suspended") {
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -163,30 +178,26 @@ fun DriverScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
-                        imageVector = if (driver?.status == "rejected") Icons.Default.Warning else Icons.Default.HourglassTop,
+                        imageVector = Icons.Default.Warning,
                         contentDescription = null,
-                        tint = if (driver?.status == "rejected") AnqeznyCrimson else AnqeznyAmber,
+                        tint = AnqeznyCrimson,
                         modifier = Modifier.size(52.dp)
                     )
                     Text(
-                        text = when (driver?.status) {
-                            "rejected" -> "تم رفض المستندات"
-                            "suspended" -> "الحساب موقوف مؤقتاً"
-                            else -> "أوراقك تحت المراجعة"
-                        },
+                        text = if (driver.status == "rejected") "تم رفض المستندات" else "الحساب موقوف مؤقتاً",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = when (driver?.status) {
-                            "rejected" -> "سبب الرفض: ${driver.rejectionReason ?: "يرجى إعادة رفع صور واضحة للأوراق القانونية."}"
-                            "suspended" -> "يرجى التواصل مع إدارة منصة انقذنى عايز ونش."
-                            else -> "تتم الآن مراجعة البطاقة والرخص وصورة الونش من قبل الإدارة. ستتحدث الشاشة تلقائياً فور التوثيق."
+                        text = if (driver.status == "rejected") {
+                            "سبب الرفض: ${driver.rejectionReason ?: "يرجى إعادة رفع صور واضحة للأوراق القانونية."}"
+                        } else {
+                            "يرجى التواصل مع إدارة منصة انقذنى عايز ونش."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = AnqeznyInkSecondary
                     )
-                    if (driver?.status == "rejected") {
+                    if (driver.status == "rejected") {
                         Button(
                             onClick = onResubmitDocs,
                             colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
@@ -210,7 +221,7 @@ fun DriverScreen(
         .sortedByDescending { it.createdAt?.seconds ?: 0L }
 
     // Enforce minimum wallet balance automatically
-    val hasMinBalance = driver.walletBalance >= pricingConfig.minWalletEgp
+    val hasMinBalance = true
     LaunchedEffect(hasMinBalance, driver.online) {
         if (!hasMinBalance && driver.online) {
             onToggleOnline(false)
