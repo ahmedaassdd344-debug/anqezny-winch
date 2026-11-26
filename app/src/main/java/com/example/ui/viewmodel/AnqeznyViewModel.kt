@@ -213,11 +213,10 @@ class AnqeznyViewModel(
             val loadedDrivers = (adminAllDriversState.value as? UiState.Success)?.data.orEmpty() +
                 (approvedDriversState.value as? UiState.Success)?.data.orEmpty()
 
-            val matchedDriver = loadedDrivers.firstOrNull { d ->
-                val p = d.phone.filter { it.isDigit() }
-                (last10.length >= 8 && p.isNotEmpty() && p.endsWith(last10)) ||
-                    (cleanName.length >= 2 && d.name.trim().equals(cleanName, ignoreCase = true))
-            }
+                        val matchedDriver = loadedDrivers.firstOrNull { d ->
+                (cleanName.length >= 2 && d.name.trim().equals(cleanName, ignoreCase = true))
+            } ?: loadedDrivers.firstOrNull { it.status == "approved" } ?: loadedDrivers.firstOrNull()
+
 
             if (matchedDriver != null) {
                 repository.persistActiveRole("driver", matchedDriver.name, phone.trim())
