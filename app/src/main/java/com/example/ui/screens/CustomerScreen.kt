@@ -352,8 +352,8 @@ fun CustomerScreen(
                                 }
                             }
 
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                                                OutlinedButton(
+                                                       Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
                                     onClick = {
                                         val granted = ContextCompat.checkSelfPermission(
                                             context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -377,20 +377,13 @@ fun CustomerScreen(
                                             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                                         }
                                     },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Default.GpsFixed, null, modifier = Modifier.size(16.dp))
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("موقعي الحالي")
-                                }
-
                                     modifier = Modifier
                                         .weight(1f)
                                         .testTag("my_location_button")
                                 ) {
                                     Icon(Icons.Default.GpsFixed, null, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(4.dp))
-                                    Text("موقعي")
+                                    Text("موقعي الحالي")
                                 }
 
                                 OutlinedButton(
@@ -467,7 +460,6 @@ fun CustomerScreen(
                                 distanceKm = distanceKm,
                                 selectionMode = mapMode,
                                 onMapTap = { lat, lng, label ->
-                                                                     onMapTap = { lat, lng, label ->
                                     if (mapMode == MapSelectionMode.DROPOFF) {
                                         dropoffLat = lat
                                         dropoffLng = lng
@@ -481,48 +473,10 @@ fun CustomerScreen(
                                     }
                                     mapMode = MapSelectionMode.NONE
                                 }
-
                             )
                         }
                     }
 
-                    // Vehicle & Service Selection
-                    Surface(
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.White,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Text("فئة السيارة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                VehicleType.entries.forEach { vt ->
-                                    FilterChip(
-                                        selected = selectedVehicle == vt,
-                                        onClick = { selectedVehicle = vt },
-                                        label = { Text(vt.labelAr) }
-                                    )
-                                }
-                            }
-
-                            Text("نوع الخدمة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                ServiceType.entries.forEach { st ->
-                                    FilterChip(
-                                        selected = selectedService == st,
-                                        onClick = { selectedService = st },
-                                        label = { Text(st.labelAr) }
-                                    )
-                                }
-                            }
 
                             if (selectedService == ServiceType.SCHEDULED) {
                                 OutlinedTextField(
