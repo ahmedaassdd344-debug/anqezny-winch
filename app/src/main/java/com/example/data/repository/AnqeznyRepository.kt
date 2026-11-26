@@ -877,7 +877,7 @@ class AnqeznyRepository(
         }
     }
 
-    suspend fun adminProcessWalletTransaction(
+        suspend fun adminProcessWalletTransaction(
         tx: WalletTransaction,
         approve: Boolean,
         adminNote: String? = null
@@ -894,20 +894,23 @@ class AnqeznyRepository(
             db.document(txPath).update(txUpdates).await()
 
             if (approve) {
-                val driverRef = db.collection("drivers").document(tx.driverId)
-                val driverSnap = driverRef.get().await()
-                if (driverSnap.exists()) {
+                val allDrivers = db.collection("drivers").get().await()
+                val matchingDocs = allDrivers.documents.filter { doc ->
+                    doc.id == tx.driverId ||
+                        (tx.driverName.isNotBlank() && doc.getString("name") == tx.driverName)
+                }
+                for (doc in matchingDocs) {
                     if (tx.type == "topup") {
-                        val curWallet = driverSnap.getDouble("walletBalance") ?: 0.0
-                        driverRef.update(
+                        val curWallet = doc.getDouble("walletBalance") ?: 0.0
+                        doc.reference.update(
                             mapOf(
                                 "walletBalance" to curWallet + tx.amountEgp,
                                 "updatedAt" to FieldValue.serverTimestamp()
                             )
                         ).await()
                     } else if (tx.type == "withdrawal") {
-                        val curWithdrawable = driverSnap.getDouble("withdrawableBalance") ?: 0.0
-                        driverRef.update(
+                        val curWithdrawable = doc.getDouble("withdrawableBalance") ?: 0.0
+                        doc.reference.update(
                             mapOf(
                                 "withdrawableBalance" to (curWithdrawable - tx.amountEgp).coerceAtLeast(0.0),
                                 "updatedAt" to FieldValue.serverTimestamp()
@@ -924,30 +927,3 @@ class AnqeznyRepository(
             Result.failure(e)
         }
     }
-
-    suspend fun adminUpdatePricingConfig(config: AppPricingConfig): Result<Unit> {
-        val path = "app_config/pricing"
-        return try {
-            requireUserId()
-            db.document(path).set(
-                mapOf(
-                    "dieselPriceEgp" to config.dieselPriceEgp,
-                    "baseFareEgp" to config.baseFareEgp,
-                    "perKmEgp" to config.perKmEgp,
-                    "commissionPercent" to config.commissionPercent,
-                    "minWalletEgp" to config.minWalletEgp,
-                    "cancelFeeEgp" to config.cancelFeeEgp,
-                    "minWithdrawEgp" to config.minWithdrawEgp,
-                    "gatewayLive" to config.gatewayLive,
-                    "updatedAt" to FieldValue.serverTimestamp()
-                )
-            ).await()
-            Result.success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            handleFirestoreError(e, OperationType.WRITE, path)
-            Result.failure(e)
-        }
-    }
-}
