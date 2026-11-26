@@ -245,7 +245,7 @@ fun AdminScreen(
                                             showDocsDialog = true
                                             com.google.firebase.firestore.FirebaseFirestore.getInstance()
                                                 .collection("drivers").document(drv.userId)
-                                                .collection("private").document("docs")
+                                                .collection("private").document("documents")
                                                 .get()
                                                 .addOnSuccessListener { snap ->
                                                     docsInfo = snap.data ?: emptyMap()
