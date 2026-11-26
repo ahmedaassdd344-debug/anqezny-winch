@@ -1,6 +1,4 @@
 package com.example.ui.viewmodel
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -17,6 +15,7 @@ import com.example.data.model.TripMessage
 import com.example.data.model.UserProfile
 import com.example.data.model.WalletTransaction
 import com.example.data.repository.AnqeznyRepository
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +30,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
@@ -52,12 +52,11 @@ class AnqeznyViewModel(
     private val _activeScreenMode = MutableStateFlow<String?>(null)
     val activeScreenMode: StateFlow<String?> = _activeScreenMode.asStateFlow()
 
-            private val _isAdminVerified = MutableStateFlow(true)
+    private val _isAdminVerified = MutableStateFlow(true)
     val isAdminVerified: StateFlow<Boolean> = _isAdminVerified.asStateFlow()
 
     private val _selectedTripForChat = MutableStateFlow<String?>(null)
     private val _selectedDriverForProfile = MutableStateFlow<String?>(null)
-
 
     private fun <T> Flow<T>.toUiState(tag: String): StateFlow<UiState<T>> =
         this.map<T, UiState<T>> { UiState.Success(it) }
@@ -135,7 +134,6 @@ class AnqeznyViewModel(
             else repository.observeDriverReviews(driverId)
         }.toUiState("driverReviews")
 
-    // Admin-only streams (gated behind isAdminVerified so non-admins never trigger PERMISSION_DENIED)
     @OptIn(ExperimentalCoroutinesApi::class)
     val adminAllDriversState: StateFlow<UiState<List<DriverProfile>>> =
         _isAdminVerified.flatMapLatest { isAdmin ->
@@ -172,14 +170,6 @@ class AnqeznyViewModel(
         _activeScreenMode.value = mode
     }
 
-    fun watchTripMessages(tripId: String?) {
-        _selectedTripForChat.value = tripId
-    }
-
-    fun watchDriverReviews(driverId: String?) {
-        _selectedDriverForProfile.value = driverId
-    }
-
     private fun launchAction(successMsg: String? = null, block: suspend () -> Result<Any?>) {
         viewModelScope.launch {
             _isBusy.value = true
@@ -200,7 +190,12 @@ class AnqeznyViewModel(
             res
         }
     }
-                    // 1. البحث برقم التليفون في جدول المستخدمين (users)
+
+    fun resumeDriverPortal(name: String, phone: String) {
+        launchAction("تم فتح صفحتك الخاصة كسائق") {
+            val cleanPhone = phone.trim()
+            val db = FirebaseFirestore.getInstance()
+
             val userQuery = db.collection("users")
                 .whereEqualTo("phone", cleanPhone)
                 .limit(1)
@@ -209,7 +204,6 @@ class AnqeznyViewModel(
 
             var targetId = userQuery.documents.firstOrNull()?.id
 
-            // 2. إذا لم يُعثر عليه، جلب السائق الحقيقي المعتمد من جدول السائقين مباشرة
             if (targetId == null) {
                 val anyDriverQuery = db.collection("drivers")
                     .limit(5)
@@ -235,192 +229,176 @@ class AnqeznyViewModel(
                 }
             }
 
-            val res = repository.persistActiveRole("driver", name, cleanPhone)
-            if (res.isSuccess) _activeScreenMode.value = "driver"
-            res
-        }
-    }
- fun resumeCompanyPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحة الشركة") {
-            val res = repository.persistActiveRole("company", name, phone)
-            if (res.isSuccess) _activeScreenMode.value = "company"
-            res
-        }
-    }
-    fun registerDriver(
-        name: String,
-        phone: String,
-        nationalId: String,
-        licenseNumber: String,
-        licenseExpiry: String,
-        winchType: String,
-        plateNumber: String,
-        area: String,
-        companyId: String?,
-        companyName: String?,
-        docIdThumb: String?,
-        docDriverLicenseThumb: String?,
-        docVehicleLicenseThumb: String?,
-        docTruckPhotoThumb: String?
-    ) {
-        launchAction("تم إرسال أوراقك للمراجعة بنجاح") {
-            val res = repository.registerDriver(
-                name, phone, nationalId, licenseNumber, licenseExpiry,
-                winchType, plateNumber, area, companyId, companyName,
-                docIdThumb, docDriverLicenseThumb, docVehicleLicenseThumb, docTruckPhotoThumb
-            )
-            if (res.isSuccess) _activeScreenMode.value = "driver"
-            res
-        }
-    }
-
-    fun toggleDriverOnline(online: Boolean) {
-        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
-            repository.toggleDriverOnline(online)
-        }
-    }
-
-    fun registerCompany(
-        companyName: String,
-        managerName: String,
-        phone: String,
-        commercialReg: String,
-        taxCard: String,
-        address: String,
-        area: String,
-        docRegThumb: String?,
-        docTaxThumb: String?,
-        docIdThumb: String?,
-        docOfficeThumb: String?
-    ) {
-        launchAction("تم إرسال أوراق الشركة للمراجعة") {
-            val res = repository.registerCompany(
-                companyName, managerName, phone, commercialReg, taxCard, address, area,
-                docRegThumb, docTaxThumb, docIdThumb, docOfficeThumb
-            )
-            if (res.isSuccess) _activeScreenMode.value = "company"
-            res
-        }
-    }
-
-    fun addCompanyDriverInvite(
-        companyName: String,
-        driverName: String,
-        driverPhone: String,
-        plateNumber: String,
-        winchType: String,
-        area: String
-    ) {
-        launchAction("تمت إضافة السائق لقائمة الشركة") {
-            repository.addCompanyDriverInvite(companyName, driverName, driverPhone, plateNumber, winchType, area)
-        }
-    }
-
-    fun createTrip(
-        customerName: String,
-        customerPhone: String,
-        pickupArea: String,
-        pickupLat: Double,
-        pickupLng: Double,
-        dropoffArea: String,
-        dropoffLat: Double,
-        dropoffLng: Double,
-        distanceKm: Double,
-        vehicleType: String,
-        serviceType: String,
-        scheduledAt: String?,
-        paymentMethod: String,
-        gatewayLive: Boolean,
-        fareEgp: Double,
-        commissionEgp: Double,
-        driverNetEgp: Double,
-        assignedDriver: DriverProfile? = null
-    ) {
-        launchAction(if (assignedDriver != null) "تم إسناد الطلب الهاتفي بنجاح" else "تم إرسال طلبك! جاري البحث عن أقرب سائق") {
-            repository.createTrip(
-                customerName, customerPhone, pickupArea, pickupLat, pickupLng,
-                dropoffArea, dropoffLat, dropoffLng, distanceKm, vehicleType, serviceType,
-                scheduledAt, paymentMethod, gatewayLive, fareEgp, commissionEgp, driverNetEgp, assignedDriver
-            )
-        }
-    }
-
-    fun acceptTrip(tripId: String, driver: DriverProfile) {
-        launchAction("تم قبول المهمة! توجه لموقع العميل") {
-            repository.acceptTrip(tripId, driver)
-        }
-    }
-
-    fun markArrived(tripId: String) {
-        launchAction("تم تسجيل الوصول وبدء عداد الانتظار") {
-            repository.markArrived(tripId)
-        }
-    }
-
-    fun savePhotosAndVerifyPin(tripId: String, photos: List<String>, pinVerified: Boolean) {
-        launchAction(if (pinVerified) "تم تأكيد كود الأمان والتحميل — تحرك لوجهة النقل" else "تم حفظ صور المعاينة") {
-            repository.saveTripPhotosAndConfirmLoaded(tripId, photos, pinVerified)
-        }
-    }
-
-    fun completeTrip(trip: Trip, driver: DriverProfile, signaturePointsCount: Int) {
-        launchAction("تم تسليم السيارة وإنهاء المهمة بنجاح!") {
-            repository.completeTripAndSettleWallet(trip, driver, signaturePointsCount)
-        }
-    }
-
-    fun cancelTrip(trip: Trip, cancelFeeEgp: Double, reason: String) {
-        launchAction("تم إلغاء الطلب") {
-            repository.cancelTrip(trip, cancelFeeEgp, reason)
-        }
-    }
-
-    fun submitRatingAndReview(trip: Trip, stars: Int, comment: String, tags: List<String>) {
-        launchAction("شكراً لتقييمك! تم حفظ تقييم السائق بنجاح") {
-            repository.submitDriverRatingAndReview(trip, stars, comment, tags)
-        }
-    }
-
-    fun sendTripMessage(trip: Trip, senderName: String, senderRole: String, text: String) {
-        launchAction(null) {
-            repository.sendTripMessage(trip, senderName, senderRole, text)
-        }
-    }
-
-    fun requestWalletTransaction(
-        driver: DriverProfile,
-        type: String,
-        amountEgp: Double,
-        method: String,
-        accountOrRef: String
-    ) {
-        val msg = if (type == "topup") "تم إرسال طلب شحن الرصيد للمراجعة" else "تم إرسال طلب سحب الأرباح"
-        launchAction(msg) {
-            repository.requestWalletTransaction(driver, type, amountEgp, method, accountOrRef)
-        }
-    }
-
-    fun adminUpdateDriverStatus(driverId: String, status: String, reason: String? = null) {
-        launchAction("تم تحديث حالة السائق") {
-            repository.adminUpdateDriverStatus(driverId, status, reason)
-        }
-    }
-
-    fun adminUpdateCompanyStatus(companyId: String, status: String, reason: String? = null) {
-        launchAction("تم تحديث حالة الشركة") {
-            repository.adminUpdateCompanyStatus(companyId, status, reason)
-        }
-    }
-
-    fun adminProcessWalletTx(tx: WalletTransaction, approve: Boolean) {
-        launchAction(if (approve) "تمت الموافقة وتحديث المحفظة" else "تم رفض الطلب") {
-            repository.adminProcessWalletTransaction(tx, approve)
-        }
-    }
-
-    fun adminSavePricing(config: AppPricingConfig) {
-        launchAction("تم حفظ إعدادات التسعير والعمولة") {
-            repository.adminUpdatePricingConfig(config)
-        }
-    }
+val res = repository.persistActiveRole("driver", name, cleanPhone)
+if (res.isSuccess) _activeScreenMode.value = "driver"
+res
+}
+}
+fun resumeCompanyPortal(name: String, phone: String) {
+launchAction("تم فتح صفحة الشركة") {
+val res = repository.persistActiveRole("company", name, phone)
+if (res.isSuccess) _activeScreenMode.value = "company"
+res
+}
+}
+fun registerDriver(
+name: String,
+phone: String,
+nationalId: String,
+licenseNumber: String,
+licenseExpiry: String,
+winchType: String,
+plateNumber: String,
+area: String,
+companyId: String?,
+companyName: String?,
+docIdThumb: String?,
+docDriverLicenseThumb: String?,
+docVehicleLicenseThumb: String?,
+docTruckPhotoThumb: String?
+) {
+launchAction("تم إرسال أوراقك للمراجعة بنجاح") {
+val res = repository.registerDriver(
+name, phone, nationalId, licenseNumber, licenseExpiry,
+winchType, plateNumber, area, companyId, companyName,
+docIdThumb, docDriverLicenseThumb, docVehicleLicenseThumb, docTruckPhotoThumb
+)
+if (res.isSuccess) _activeScreenMode.value = "driver"
+res
+}
+}
+fun toggleDriverOnline(online: Boolean) {
+launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
+repository.toggleDriverOnline(online)
+}
+}
+fun registerCompany(
+companyName: String,
+managerName: String,
+phone: String,
+commercialReg: String,
+taxCard: String,
+address: String,
+area: String,
+docRegThumb: String?,
+docTaxThumb: String?,
+docIdThumb: String?,
+docOfficeThumb: String?
+) {
+launchAction("تم إرسال أوراق الشركة للمراجعة") {
+val res = repository.registerCompany(
+companyName, managerName, phone, commercialReg, taxCard, address, area,
+docRegThumb, docTaxThumb, docIdThumb, docOfficeThumb
+)
+if (res.isSuccess) _activeScreenMode.value = "company"
+res
+}
+}
+fun addCompanyDriverInvite(
+companyName: String,
+driverName: String,
+driverPhone: String,
+plateNumber: String,
+winchType: String,
+area: String
+) {
+launchAction("تمت إضافة السائق لقائمة الشركة") {
+repository.addCompanyDriverInvite(companyName, driverName, driverPhone, plateNumber, winchType, area)
+}
+}
+fun createTrip(
+customerName: String,
+customerPhone: String,
+pickupArea: String,
+pickupLat: Double,
+pickupLng: Double,
+dropoffArea: String,
+dropoffLat: Double,
+dropoffLng: Double,
+distanceKm: Double,
+vehicleType: String,
+serviceType: String,
+scheduledAt: String?,
+paymentMethod: String,
+gatewayLive: Boolean,
+fareEgp: Double,
+commissionEgp: Double,
+driverNetEgp: Double,
+assignedDriver: DriverProfile? = null
+) {
+launchAction(if (assignedDriver != null) "تم إسناد الطلب الهاتفي بنجاح" else "تم إرسال طلبك! جاري البحث عن أقرب سائق") {
+repository.createTrip(
+customerName, customerPhone, pickupArea, pickupLat, pickupLng,
+dropoffArea, dropoffLat, dropoffLng, distanceKm, vehicleType, serviceType,
+scheduledAt, paymentMethod, gatewayLive, fareEgp, commissionEgp, driverNetEgp, assignedDriver
+)
+}
+}
+fun acceptTrip(tripId: String, driver: DriverProfile) {
+launchAction("تم قبول المهمة! توجه لموقع العميل") {
+repository.acceptTrip(tripId, driver)
+}
+}
+fun markArrived(tripId: String) {
+launchAction("تم تسجيل الوصول وبدء عداد الانتظار") {
+repository.markArrived(tripId)
+}
+}
+fun savePhotosAndVerifyPin(tripId: String, photos: List, pinVerified: Boolean) {
+launchAction(if (pinVerified) "تم تأكيد كود الأمان والتحميل — تحرك لوجهة النقل" else "تم حفظ صور المعاينة") {
+repository.saveTripPhotosAndConfirmLoaded(tripId, photos, pinVerified)
+}
+}
+fun completeTrip(trip: Trip, driver: DriverProfile, signaturePointsCount: Int) {
+launchAction("تم تسليم السيارة وإنهاء المهمة بنجاح!") {
+repository.completeTripAndSettleWallet(trip, driver, signaturePointsCount)
+}
+}
+fun cancelTrip(trip: Trip, cancelFeeEgp: Double, reason: String) {
+launchAction("تم إلغاء الطلب") {
+repository.cancelTrip(trip, cancelFeeEgp, reason)
+}
+}
+fun submitRatingAndReview(trip: Trip, stars: Int, comment: String, tags: List) {
+launchAction("شكراً لتقييمك! تم حفظ تقييم السائق بنجاح") {
+repository.submitDriverRatingAndReview(trip, stars, comment, tags)
+}
+}
+fun sendTripMessage(trip: Trip, senderName: String, senderRole: String, text: String) {
+launchAction(null) {
+repository.sendTripMessage(trip, senderName, senderRole, text)
+}
+}
+fun requestWalletTransaction(
+driver: DriverProfile,
+type: String,
+amountEgp: Double,
+method: String,
+accountOrRef: String
+) {
+val msg = if (type == "topup") "تم إرسال طلب شحن الرصيد للمراجعة" else "تم إرسال طلب سحب الأرباح"
+launchAction(msg) {
+repository.requestWalletTransaction(driver, type, amountEgp, method, accountOrRef)
+}
+}
+fun adminUpdateDriverStatus(driverId: String, status: String, reason: String? = null) {
+launchAction("تم تحديث حالة السائق") {
+repository.adminUpdateDriverStatus(driverId, status, reason)
+}
+}
+fun adminUpdateCompanyStatus(companyId: String, status: String, reason: String? = null) {
+launchAction("تم تحديث حالة الشركة") {
+repository.adminUpdateCompanyStatus(companyId, status, reason)
+}
+}
+fun adminProcessWalletTx(tx: WalletTransaction, approve: Boolean) {
+launchAction(if (approve) "تمت الموافقة وتحديث المحفظة" else "تم رفض الطلب") {
+repository.adminProcessWalletTransaction(tx, approve)
+}
+}
+fun adminSavePricing(config: AppPricingConfig) {
+launchAction("تم حفظ إعدادات التسعير والعمولة") {
+repository.adminUpdatePricingConfig(config)
+}
+}
 }
