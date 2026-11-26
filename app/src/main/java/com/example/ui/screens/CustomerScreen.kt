@@ -353,27 +353,37 @@ fun CustomerScreen(
                             }
 
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                                OutlinedButton(
+                                                                OutlinedButton(
                                     onClick = {
                                         val granted = ContextCompat.checkSelfPermission(
-                                            context, Manifest.permission.ACCESS_COARSE_LOCATION
-                                        ) == PackageManager.PERMISSION_GRANTED
+                                            context, Manifest.permission.ACCESS_FINE_LOCATION
+                                        ) == PackageManager.PERMISSION_GRANTED ||
+                                            ContextCompat.checkSelfPermission(
+                                                context, Manifest.permission.ACCESS_COARSE_LOCATION
+                                            ) == PackageManager.PERMISSION_GRANTED
                                         if (granted) {
                                             scope.launch {
                                                 val loc = fetchCurrentGpsLocation(context)
                                                 if (loc != null) {
-                                                    pickupLat = loc.first.coerceIn(29.90, 30.15)
-                                                    pickupLng = loc.second.coerceIn(30.90, 31.25)
+                                                    pickupLat = loc.first
+                                                    pickupLng = loc.second
                                                     pickupAreaName = "موقعي الحالي (GPS)"
-                                                    onShowMessage("تم تحديد موقعك الحالي")
+                                                    onShowMessage("تم تحديد موقعك الحالي بنجاح")
                                                 } else {
-                                                    onShowMessage("تعذر جلب الموقع — اختر من الخريطة")
+                                                    onShowMessage("تعذر جلب إشارة GPS — تأكد من تشغيل الموقع أو المس الخريطة مباشرة")
                                                 }
                                             }
                                         } else {
-                                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                                         }
                                     },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.GpsFixed, null, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("موقعي الحالي")
+                                }
+
                                     modifier = Modifier
                                         .weight(1f)
                                         .testTag("my_location_button")
@@ -457,17 +467,21 @@ fun CustomerScreen(
                                 distanceKm = distanceKm,
                                 selectionMode = mapMode,
                                 onMapTap = { lat, lng, label ->
-                                    if (mapMode == MapSelectionMode.PICKUP) {
-                                        pickupLat = lat
-                                        pickupLng = lng
-                                        pickupAreaName = label
-                                    } else if (mapMode == MapSelectionMode.DROPOFF) {
+                                                                     onMapTap = { lat, lng, label ->
+                                    if (mapMode == MapSelectionMode.DROPOFF) {
                                         dropoffLat = lat
                                         dropoffLng = lng
                                         dropoffAreaName = label
+                                        onShowMessage("تم تحديد وجهة النقل: $label")
+                                    } else {
+                                        pickupLat = lat
+                                        pickupLng = lng
+                                        pickupAreaName = label
+                                        onShowMessage("تم تحديد موقع الاستلام: $label")
                                     }
                                     mapMode = MapSelectionMode.NONE
                                 }
+
                             )
                         }
                     }
