@@ -355,9 +355,13 @@ class AnqeznyRepository(
         }
     }
 
-    suspend fun toggleDriverOnline(online: Boolean): Result<Unit> {
+       suspend fun toggleDriverOnline(online: Boolean): Result<Unit> {
         val uid = requireUserId()
-        val path = "drivers/$uid"
+        return toggleDriverOnlineForId(uid, online)
+    }
+
+    suspend fun toggleDriverOnlineForId(driverId: String, online: Boolean): Result<Unit> {
+        val path = "drivers/$driverId"
         return try {
             db.document(path).update(
                 mapOf(
@@ -373,6 +377,7 @@ class AnqeznyRepository(
             Result.failure(e)
         }
     }
+
 
     suspend fun registerCompany(
         companyName: String,
