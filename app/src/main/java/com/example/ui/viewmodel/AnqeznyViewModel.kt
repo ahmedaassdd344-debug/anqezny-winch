@@ -199,7 +199,29 @@ class AnqeznyViewModel(
         }
     }
 
-              fun resumeDriverPortal(name: String, phone: String) {
+                  suspend fun toggleDriverOnline(online: Boolean): Result<Unit> {
+        val uid = requireUserId()
+        return toggleDriverOnlineForId(uid, online)
+    }
+
+    suspend fun toggleDriverOnlineForId(driverId: String, online: Boolean): Result<Unit> {
+        val path = "drivers/$driverId"
+        return try {
+            db.document(path).update(
+                mapOf(
+                    "online" to online,
+                    "updatedAt" to FieldValue.serverTimestamp()
+                )
+            ).await()
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            handleFirestoreError(e, OperationType.UPDATE, path)
+            Result.failure(e)
+        }
+    }
+    fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
             val digitsOnly = phone.filter { it.isDigit() }
             val last10 = if (digitsOnly.length >= 10) digitsOnly.takeLast(10) else digitsOnly
@@ -275,62 +297,6 @@ class AnqeznyViewModel(
 
             val targetId = activeDriver?.userId?.ifBlank { currentUserId } ?: currentUserId
             repository.toggleDriverOnlineForId(targetId, online)
-        }
-    }
-
-
-    fun toggleDriverOnline(online: Boolean) {
-        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
-            val currentUserName = (userProfileState.value as? UiState.Success)?.data?.displayName
-            val allLoaded = ((adminAllDriversState.value as? UiState.Success)?.data.orEmpty() +
-                (approvedDriversState.value as? UiState.Success)?.data.orEmpty())
-            val activeDriver = (driverProfileState.value as? UiState.Success)?.data
-                ?: allLoaded.firstOrNull { it.name == currentUserName }
-                ?: allLoaded.firstOrNull()
-
-            val targetId = activeDriver?.userId?.ifBlank { currentUserId } ?: currentUserId
-            repository.toggleDriverOnlineForId(targetId, online)
-        }
-    }
-
-    fun resumeCompanyPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحة الشركة") {
-            val res = repository.persistActiveRole("company", name, phone)
-            if (res.isSuccess) _activeScreenMode.value = "company"
-            res
-        }
-    }
-
-    fun registerDriver(
-        name: String,
-        phone: String,
-        nationalId: String,
-        licenseNumber: String,
-        licenseExpiry: String,
-        winchType: String,
-        plateNumber: String,
-        area: String,
-        companyId: String?,
-        companyName: String?,
-        docIdThumb: String?,
-        docDriverLicenseThumb: String?,
-        docVehicleLicenseThumb: String?,
-        docTruckPhotoThumb: String?
-    ) {
-        launchAction("تم إرسال أوراقك للمراجعة بنجاح") {
-            val res = repository.registerDriver(
-                name, phone, nationalId, licenseNumber, licenseExpiry,
-                winchType, plateNumber, area, companyId, companyName,
-                docIdThumb, docDriverLicenseThumb, docVehicleLicenseThumb, docTruckPhotoThumb
-            )
-            if (res.isSuccess) _activeScreenMode.value = "driver"
-            res
-        }
-    }
-
-    fun toggleDriverOnline(online: Boolean) {
-        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
-            repository.toggleDriverOnline(online)
         }
     }
 
