@@ -243,7 +243,13 @@ class AnqeznyViewModel(
             res
         }
     }
-
+ fun resumeCompanyPortal(name: String, phone: String) {
+        launchAction("تم فتح صفحة الشركة") {
+            val res = repository.persistActiveRole("company", name, phone)
+            if (res.isSuccess) _activeScreenMode.value = "company"
+            res
+        }
+    }
     fun registerDriver(
         name: String,
         phone: String,
