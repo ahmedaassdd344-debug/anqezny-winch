@@ -240,6 +240,46 @@ class AnqeznyViewModel(
             }
         }
     }
+    fun resumeCompanyPortal(name: String, phone: String) {
+        launchAction("تم فتح صفحة الشركة") {
+            val res = repository.persistActiveRole("company", name, phone)
+            if (res.isSuccess) _activeScreenMode.value = "company"
+            res
+        }
+    }
+
+    fun registerDriver(
+        name: String,
+        phone: String,
+        nationalId: String,
+        licenseNumber: String,
+        licenseExpiry: String,
+        winchType: String,
+        plateNumber: String,
+        area: String,
+        companyId: String?,
+        companyName: String?,
+        docIdThumb: String?,
+        docDriverLicenseThumb: String?,
+        docVehicleLicenseThumb: String?,
+        docTruckPhotoThumb: String?
+    ) {
+        launchAction("تم إرسال أوراقك للمراجعة بنجاح") {
+            val res = repository.registerDriver(
+                name, phone, nationalId, licenseNumber, licenseExpiry,
+                winchType, plateNumber, area, companyId, companyName,
+                docIdThumb, docDriverLicenseThumb, docVehicleLicenseThumb, docTruckPhotoThumb
+            )
+            if (res.isSuccess) _activeScreenMode.value = "driver"
+            res
+        }
+    }
+
+    fun toggleDriverOnline(online: Boolean) {
+        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
+            repository.toggleDriverOnline(online)
+        }
+    }
 
 fun registerCompany(
 companyName: String,
