@@ -102,6 +102,8 @@ import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.imePadding
+
 @Composable
 fun GoogleAuthSignInScreen(
     onAuthSuccess: () -> Unit,
@@ -329,7 +331,9 @@ fun RoleSelectionScreen(
             modifier = Modifier
                 .widthIn(max = 600.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                            .imePadding()
+            .verticalScroll(rememberScrollState())
+
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
