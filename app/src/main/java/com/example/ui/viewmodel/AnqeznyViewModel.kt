@@ -200,12 +200,7 @@ class AnqeznyViewModel(
             res
         }
     }
-        fun resumeDriverPortal(name: String, phone: String) {
-        launchAction("تم فتح صفحتك الخاصة كسائق") {
-            val cleanPhone = phone.trim()
-            val db = FirebaseFirestore.getInstance()
-
-            // 1. البحث برقم التليفون في جدول المستخدمين (users)
+                    // 1. البحث برقم التليفون في جدول المستخدمين (users)
             val userQuery = db.collection("users")
                 .whereEqualTo("phone", cleanPhone)
                 .limit(1)
@@ -214,20 +209,22 @@ class AnqeznyViewModel(
 
             var targetId = userQuery.documents.firstOrNull()?.id
 
-            // 2. إذا لم يُعثر عليه بالرقم، جلب أول سائق حالته "approved" في النظام
+            // 2. إذا لم يُعثر عليه، جلب السائق الحقيقي المعتمد من جدول السائقين مباشرة
             if (targetId == null) {
-                val approvedQuery = db.collection("drivers")
-                    .whereEqualTo("status", "approved")
-                    .limit(1)
+                val anyDriverQuery = db.collection("drivers")
+                    .limit(5)
                     .get()
                     .await()
-                targetId = approvedQuery.documents.firstOrNull()?.id
+                val matched = anyDriverQuery.documents.firstOrNull { it.getString("status") == "approved" }
+                    ?: anyDriverQuery.documents.firstOrNull()
+                targetId = matched?.id
             }
 
             if (targetId != null) {
                 val driverSnap = db.collection("drivers").document(targetId).get().await()
                 if (driverSnap.exists()) {
                     val data = driverSnap.data?.toMutableMap() ?: mutableMapOf()
+                    data["userId"] = currentUserId
                     data["id"] = currentUserId
                     data["status"] = "approved"
                     db.collection("drivers").document(currentUserId).set(data).await()
