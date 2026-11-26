@@ -191,7 +191,7 @@ fun AdminScreen(
                                                 Text("الرقم القومي: ${docsInfo!!["nationalId"] ?: "غير مسجل"}")
                                                 Text("رقم الرخصة: ${docsInfo!!["licenseNumber"] ?: "غير مسجل"} (تنتهي: ${docsInfo!!["licenseExpiry"] ?: "-"})")
                                                 val docKeys = listOf(
-                                                    "docIdThumb" to "1. صورة البطاقة الشخصية",
+                                                    3. "docIdCardThumb" to "1. صورة البطاقة الشخصية",
                                                     "docDriverLicenseThumb" to "2. صورة رخصة القيادة",
                                                     "docVehicleLicenseThumb" to "3. صورة رخصة الونش",
                                                     "docTruckPhotoThumb" to "4. صورة الونش"
