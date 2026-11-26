@@ -927,3 +927,30 @@ class AnqeznyRepository(
             Result.failure(e)
         }
     }
+            suspend fun adminUpdatePricingConfig(config: AppPricingConfig): Result<Unit> {
+        val path = "app_config/pricing"
+        return try {
+            requireUserId()
+            db.document(path).set(
+                mapOf(
+                    "dieselPriceEgp" to config.dieselPriceEgp,
+                    "baseFareEgp" to config.baseFareEgp,
+                    "perKmEgp" to config.perKmEgp,
+                    "commissionPercent" to config.commissionPercent,
+                    "minWalletEgp" to config.minWalletEgp,
+                    "cancelFeeEgp" to config.cancelFeeEgp,
+                    "minWithdrawEgp" to config.minWithdrawEgp,
+                    "gatewayLive" to config.gatewayLive,
+                    "updatedAt" to FieldValue.serverTimestamp()
+                )
+            ).await()
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            handleFirestoreError(e, OperationType.WRITE, path)
+            Result.failure(e)
+        }
+    }
+}
+
