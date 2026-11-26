@@ -112,8 +112,8 @@ fun GizaRouteMap(
                     val dPoint = GeoPoint(dropoffLat, dropoffLng)
 
                     val eventsReceiver = object : MapEventsReceiver {
-                        override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-                            if (p != null && selectionMode != MapSelectionMode.NONE && onMapTap != null) {
+                                               override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+                            if (p != null && onMapTap != null) {
                                 val nearest = GIZA_AREAS.minByOrNull { area ->
                                     val dLat = area.lat - p.latitude
                                     val dLng = area.lng - p.longitude
@@ -129,6 +129,7 @@ fun GizaRouteMap(
                             }
                             return false
                         }
+
                         override fun longPressHelper(p: GeoPoint?): Boolean = false
                     }
                     mapView.overlays.add(MapEventsOverlay(eventsReceiver))
