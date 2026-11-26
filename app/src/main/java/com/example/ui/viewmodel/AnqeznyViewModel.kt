@@ -341,11 +341,18 @@ scheduledAt, paymentMethod, gatewayLive, fareEgp, commissionEgp, driverNetEgp, a
 )
 }
 }
-fun acceptTrip(tripId: String, driver: DriverProfile) {
-launchAction("تم قبول المهمة! توجه لموقع العميل") {
-repository.acceptTrip(tripId, driver)
-}
-}
+    fun acceptTrip(tripId: String, driver: DriverProfile) {
+        launchAction("تم قبول المهمة! توجه لموقع العميل") {
+            repository.acceptTrip(tripId, driver)
+        }
+    }
+
+    fun markArrived(tripId: String) {
+        launchAction("تم تسجيل الوصول وبدء عداد الانتظار") {
+            repository.markArrived(tripId)
+        }
+    }
+
     fun savePhotosAndVerifyPin(tripId: String, photos: List<String>, pinVerified: Boolean) {
         launchAction(if (pinVerified) "تم تأكيد كود الأمان والتحميل — تحرك لوجهة النقل" else "تم حفظ صور المعاينة") {
             repository.saveTripPhotosAndConfirmLoaded(tripId, photos, pinVerified)
@@ -370,51 +377,46 @@ repository.acceptTrip(tripId, driver)
         }
     }
 
-fun cancelTrip(trip: Trip, cancelFeeEgp: Double, reason: String) {
-launchAction("تم إلغاء الطلب") {
-repository.cancelTrip(trip, cancelFeeEgp, reason)
-}
-}
-fun submitRatingAndReview(trip: Trip, stars: Int, comment: String, tags: List) {
-launchAction("شكراً لتقييمك! تم حفظ تقييم السائق بنجاح") {
-repository.submitDriverRatingAndReview(trip, stars, comment, tags)
-}
-}
-fun sendTripMessage(trip: Trip, senderName: String, senderRole: String, text: String) {
-launchAction(null) {
-repository.sendTripMessage(trip, senderName, senderRole, text)
-}
-}
-fun requestWalletTransaction(
-driver: DriverProfile,
-type: String,
-amountEgp: Double,
-method: String,
-accountOrRef: String
-) {
-val msg = if (type == "topup") "تم إرسال طلب شحن الرصيد للمراجعة" else "تم إرسال طلب سحب الأرباح"
-launchAction(msg) {
-repository.requestWalletTransaction(driver, type, amountEgp, method, accountOrRef)
-}
-}
-fun adminUpdateDriverStatus(driverId: String, status: String, reason: String? = null) {
-launchAction("تم تحديث حالة السائق") {
-repository.adminUpdateDriverStatus(driverId, status, reason)
-}
-}
-fun adminUpdateCompanyStatus(companyId: String, status: String, reason: String? = null) {
-launchAction("تم تحديث حالة الشركة") {
-repository.adminUpdateCompanyStatus(companyId, status, reason)
-}
-}
-fun adminProcessWalletTx(tx: WalletTransaction, approve: Boolean) {
-launchAction(if (approve) "تمت الموافقة وتحديث المحفظة" else "تم رفض الطلب") {
-repository.adminProcessWalletTransaction(tx, approve)
-}
-}
-fun adminSavePricing(config: AppPricingConfig) {
-launchAction("تم حفظ إعدادات التسعير والعمولة") {
-repository.adminUpdatePricingConfig(config)
-}
-}
+    fun sendTripMessage(trip: Trip, senderName: String, senderRole: String, text: String) {
+        launchAction(null) {
+            repository.sendTripMessage(trip, senderName, senderRole, text)
+        }
+    }
+
+    fun requestWalletTransaction(
+        driver: DriverProfile,
+        type: String,
+        amountEgp: Double,
+        method: String,
+        accountOrRef: String
+    ) {
+        val msg = if (type == "topup") "تم إرسال طلب شحن الرصيد للمراجعة" else "تم إرسال طلب سحب الأرباح"
+        launchAction(msg) {
+            repository.requestWalletTransaction(driver, type, amountEgp, method, accountOrRef)
+        }
+    }
+
+    fun adminUpdateDriverStatus(driverId: String, status: String, reason: String? = null) {
+        launchAction("تم تحديث حالة السائق") {
+            repository.adminUpdateDriverStatus(driverId, status, reason)
+        }
+    }
+
+    fun adminUpdateCompanyStatus(companyId: String, status: String, reason: String? = null) {
+        launchAction("تم تحديث حالة الشركة") {
+            repository.adminUpdateCompanyStatus(companyId, status, reason)
+        }
+    }
+
+    fun adminProcessWalletTx(tx: WalletTransaction, approve: Boolean) {
+        launchAction(if (approve) "تمت الموافقة وتحديث المحفظة" else "تم رفض الطلب") {
+            repository.adminProcessWalletTransaction(tx, approve)
+        }
+    }
+
+    fun adminSavePricing(config: AppPricingConfig) {
+        launchAction("تم حفظ إعدادات التسعير والعمولة") {
+            repository.adminUpdatePricingConfig(config)
+        }
+    }
 }
