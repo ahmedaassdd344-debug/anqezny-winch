@@ -12,13 +12,11 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 data class GizaArea(
-    val id: String,
-        val name: String = "",
-    val phone: String = "",
-
+    val nameAr: String,
     val lat: Double,
     val lng: Double
 )
+
 
 val GIZA_AREAS = listOf(
     GizaArea("dokki", "الدقي", 30.0394, 31.2111),
@@ -148,6 +146,7 @@ data class DriverProfile(
     @DocumentId val id: String = "",
     val userId: String = "",
     val name: String = "",
+    val phone: String = "",
     val winchType: String = "",
     val plateNumber: String = "",
     val area: String = "",
