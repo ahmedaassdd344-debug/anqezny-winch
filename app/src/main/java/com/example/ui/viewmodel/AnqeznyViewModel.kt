@@ -346,21 +346,30 @@ launchAction("تم قبول المهمة! توجه لموقع العميل") {
 repository.acceptTrip(tripId, driver)
 }
 }
-fun markArrived(tripId: String) {
-launchAction("تم تسجيل الوصول وبدء عداد الانتظار") {
-repository.markArrived(tripId)
-}
-}
-fun savePhotosAndVerifyPin(tripId: String, photos: List, pinVerified: Boolean) {
-launchAction(if (pinVerified) "تم تأكيد كود الأمان والتحميل — تحرك لوجهة النقل" else "تم حفظ صور المعاينة") {
-repository.saveTripPhotosAndConfirmLoaded(tripId, photos, pinVerified)
-}
-}
-fun completeTrip(trip: Trip, driver: DriverProfile, signaturePointsCount: Int) {
-launchAction("تم تسليم السيارة وإنهاء المهمة بنجاح!") {
-repository.completeTripAndSettleWallet(trip, driver, signaturePointsCount)
-}
-}
+    fun savePhotosAndVerifyPin(tripId: String, photos: List<String>, pinVerified: Boolean) {
+        launchAction(if (pinVerified) "تم تأكيد كود الأمان والتحميل — تحرك لوجهة النقل" else "تم حفظ صور المعاينة") {
+            repository.saveTripPhotosAndConfirmLoaded(tripId, photos, pinVerified)
+        }
+    }
+
+    fun completeTrip(trip: Trip, driver: DriverProfile, signaturePointsCount: Int) {
+        launchAction("تم تسليم السيارة وإنهاء المهمة بنجاح!") {
+            repository.completeTripAndSettleWallet(trip, driver, signaturePointsCount)
+        }
+    }
+
+    fun cancelTrip(trip: Trip, cancelFeeEgp: Double, reason: String) {
+        launchAction("تم إلغاء الطلب") {
+            repository.cancelTrip(trip, cancelFeeEgp, reason)
+        }
+    }
+
+    fun submitRatingAndReview(trip: Trip, stars: Int, comment: String, tags: List<String>) {
+        launchAction("شكراً لتقييمك! تم حفظ تقييم السائق بنجاح") {
+            repository.submitDriverRatingAndReview(trip, stars, comment, tags)
+        }
+    }
+
 fun cancelTrip(trip: Trip, cancelFeeEgp: Double, reason: String) {
 launchAction("تم إلغاء الطلب") {
 repository.cancelTrip(trip, cancelFeeEgp, reason)
