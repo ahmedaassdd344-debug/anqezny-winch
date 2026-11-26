@@ -158,7 +158,7 @@ fun DriverScreen(
         return
     }
 
-    if (driver.status == "rejected" || driver.status == "suspended") {
+        if (driver.status != "approved") {
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -178,21 +178,25 @@ fun DriverScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = if (driver.status == "rejected") Icons.Default.Warning else Icons.Default.HourglassTop,
                         contentDescription = null,
-                        tint = AnqeznyCrimson,
+                        tint = if (driver.status == "rejected") AnqeznyCrimson else AnqeznyAmber,
                         modifier = Modifier.size(52.dp)
                     )
                     Text(
-                        text = if (driver.status == "rejected") "تم رفض المستندات" else "الحساب موقوف مؤقتاً",
+                        text = when (driver.status) {
+                            "rejected" -> "تم رفض المستندات"
+                            "suspended" -> "الحساب موقوف مؤقتاً"
+                            else -> "أوراقك تحت المراجعة"
+                        },
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (driver.status == "rejected") {
-                            "سبب الرفض: ${driver.rejectionReason ?: "يرجى إعادة رفع صور واضحة للأوراق القانونية."}"
-                        } else {
-                            "يرجى التواصل مع إدارة منصة انقذنى عايز ونش."
+                        text = when (driver.status) {
+                            "rejected" -> "سبب الرفض: ${driver.rejectionReason ?: "يرجى إعادة رفع صور واضحة للأوراق القانونية."}"
+                            "suspended" -> "يرجى التواصل مع إدارة منصة انقذنى عايز ونش."
+                            else -> "تتم الآن مراجعة البطاقة والرخص وصورة الونش من قبل الإدارة. ستتحدث الشاشة تلقائياً فور التوثيق."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = AnqeznyInkSecondary
@@ -221,7 +225,7 @@ fun DriverScreen(
         .sortedByDescending { it.createdAt?.seconds ?: 0L }
 
     // Enforce minimum wallet balance automatically
-    val hasMinBalance = true
+    val hasMinBalance = driver.walletBalance >= pricingConfig.minWalletEgp
     LaunchedEffect(hasMinBalance, driver.online) {
         if (!hasMinBalance && driver.online) {
             onToggleOnline(false)
