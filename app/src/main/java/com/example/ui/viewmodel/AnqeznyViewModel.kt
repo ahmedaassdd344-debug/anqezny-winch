@@ -199,7 +199,7 @@ class AnqeznyViewModel(
         }
     }
 
-           fun resumeDriverPortal(name: String, phone: String) {
+              fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
             val digitsOnly = phone.filter { it.isDigit() }
             val last10 = if (digitsOnly.length >= 10) digitsOnly.takeLast(10) else digitsOnly
@@ -263,6 +263,21 @@ class AnqeznyViewModel(
             res
         }
     }
+
+    fun toggleDriverOnline(online: Boolean) {
+        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
+            val currentUserName = (userProfileState.value as? UiState.Success)?.data?.displayName
+            val allLoaded = ((adminAllDriversState.value as? UiState.Success)?.data.orEmpty() +
+                (approvedDriversState.value as? UiState.Success)?.data.orEmpty())
+            val activeDriver = (driverProfileState.value as? UiState.Success)?.data
+                ?: allLoaded.firstOrNull { it.name == currentUserName }
+                ?: allLoaded.firstOrNull()
+
+            val targetId = activeDriver?.userId?.ifBlank { currentUserId } ?: currentUserId
+            repository.toggleDriverOnlineForId(targetId, online)
+        }
+    }
+
 
     fun toggleDriverOnline(online: Boolean) {
         launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
