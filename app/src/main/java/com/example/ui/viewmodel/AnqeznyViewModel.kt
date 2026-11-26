@@ -204,91 +204,40 @@ class AnqeznyViewModel(
             val cleanPhone = phone.trim()
             val db = FirebaseFirestore.getInstance()
 
-            val userQuery = db.collection("users")
+            val byDriverPhone = db.collection("drivers")
                 .whereEqualTo("phone", cleanPhone)
-                .limit(1)
                 .get()
                 .await()
 
-            var targetId = userQuery.documents.firstOrNull()?.id
+            var matchedDoc = byDriverPhone.documents.firstOrNull { it.getString("status") == "approved" }
+                ?: byDriverPhone.documents.firstOrNull()
 
-            if (targetId == null) {
-                val anyDriverQuery = db.collection("drivers")
-                    .limit(5)
+            if (matchedDoc == null) {
+                val userQuery = db.collection("users")
+                    .whereEqualTo("phone", cleanPhone)
+                    .limit(1)
                     .get()
                     .await()
-                val matched = anyDriverQuery.documents.firstOrNull { it.getString("status") == "approved" }
-                    ?: anyDriverQuery.documents.firstOrNull()
-                targetId = matched?.id
+                val uidFromUser = userQuery.documents.firstOrNull()?.id
+                if (uidFromUser != null) {
+                    val dSnap = db.collection("drivers").document(uidFromUser).get().await()
+                    if (dSnap.exists()) matchedDoc = dSnap
+                }
             }
 
-            if (targetId != null) {
-                val driverSnap = db.collection("drivers").document(targetId).get().await()
-                if (driverSnap.exists()) {
-                    val data = driverSnap.data?.toMutableMap() ?: mutableMapOf()
-                    data["userId"] = currentUserId
-                    data["id"] = currentUserId
-                    data["status"] = "approved"
-                    db.collection("drivers").document(currentUserId).set(data).await()
-                    val foundName = driverSnap.getString("name") ?: name
-                   repository.persistActiveRole("driver", foundName, cleanPhone)
-                      _activeScreenMode.value = "driver"
-               return@launchAction Result.success(Unit)
-}
-}
-val res = repository.persistActiveRole("driver", name, cleanPhone)
-if (res.isSuccess) _activeScreenMode.value = "driver"
-res
-}
-}
-fun resumeCompanyPortal(name: String, phone: String) {
-launchAction("تم فتح صفحة الشركة") {
-val res = repository.persistActiveRole("company", name, phone)
-if (res.isSuccess) _activeScreenMode.value = "company"
-res
-}
-}
-fun registerDriver(
-name: String,
-phone: String,
-nationalId: String,
-licenseNumber: String,
-licenseExpiry: String,
-winchType: String,
-plateNumber: String,
-area: String,
-companyId: String?,
-companyName: String?,
-docIdThumb: String?,
-docDriverLicenseThumb: String?,
-docVehicleLicenseThumb: String?,
-docTruckPhotoThumb: String?
-) {
-launchAction("تم إرسال أوراقك للمراجعة بنجاح") {
-val res = repository.registerDriver(
-name, phone, nationalId, licenseNumber, licenseExpiry,
-winchType, plateNumber, area, companyId, companyName,
-docIdThumb, docDriverLicenseThumb, docVehicleLicenseThumb, docTruckPhotoThumb
-)
-if (res.isSuccess) _activeScreenMode.value = "driver"
-res
-}
-}
-    fun toggleDriverOnline(online: Boolean) {
-        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
-            val db = FirebaseFirestore.getInstance()
-            val updateMap = mapOf("online" to online, "userId" to currentUserId, "id" to currentUserId, "status" to "approved")
-            db.collection("drivers").document(currentUserId)
-                .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
-                .await()
-            val activeDriverId = (driverProfileState.value as? UiState.Success)?.data?.userId
-                ?: (approvedDriversState.value as? UiState.Success)?.data?.firstOrNull()?.userId
-            if (!activeDriverId.isNullOrBlank() && activeDriverId != currentUserId) {
-                db.collection("drivers").document(activeDriverId)
-                    .set(mapOf("online" to online), com.google.firebase.firestore.SetOptions.merge())
-                    .await()
+            if (matchedDoc != null && matchedDoc.exists()) {
+                val data = matchedDoc.data?.toMutableMap() ?: mutableMapOf()
+                data["userId"] = currentUserId
+                data["id"] = currentUserId
+                data["phone"] = cleanPhone
+                db.collection("drivers").document(currentUserId).set(data).await()
+                val foundName = matchedDoc.getString("name") ?: name
+                repository.persistActiveRole("driver", foundName, cleanPhone)
+                _activeScreenMode.value = "driver"
+                return@launchAction Result.success(Unit)
+            } else {
+                return@launchAction Result.failure(IllegalArgumentException("رقم الموبايل غير مسجل كسائق — سجّل أوراقك أولاً"))
             }
-            Result.success(Unit)
         }
     }
 
