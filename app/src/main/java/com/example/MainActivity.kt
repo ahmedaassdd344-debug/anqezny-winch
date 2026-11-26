@@ -236,9 +236,10 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                     onShowMessage = viewModel::showFeedback
                 )
 
-                                       "driver" -> DriverScreen(
-                    driver = driverProfile ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull(),
+                                                    "driver" -> DriverScreen(
+                    driver = driverProfile ?: (adminDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull(),
                     driverPrivateDocs = driverPrivateDocs,
+
 
 
                     myReviewsState = myDriverReviewsState,
