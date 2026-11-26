@@ -417,3 +417,4 @@ scheduledAt, paymentMethod, gatewayLive, fareEgp, commissionEgp, driverNetEgp, a
         }
     }
 }
+
