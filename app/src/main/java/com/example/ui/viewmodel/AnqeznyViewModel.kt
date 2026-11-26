@@ -170,6 +170,14 @@ class AnqeznyViewModel(
         _activeScreenMode.value = mode
     }
 
+    fun watchTripMessages(tripId: String?) {
+        _selectedTripForChat.value = tripId
+    }
+
+    fun watchDriverReviews(driverId: String?) {
+        _selectedDriverForProfile.value = driverId
+    }
+
     private fun launchAction(successMsg: String? = null, block: suspend () -> Result<Any?>) {
         viewModelScope.launch {
             _isBusy.value = true
@@ -223,12 +231,11 @@ class AnqeznyViewModel(
                     data["status"] = "approved"
                     db.collection("drivers").document(currentUserId).set(data).await()
                     val foundName = driverSnap.getString("name") ?: name
-                    repository.persistActiveRole("driver", foundName, cleanPhone)
-                    _activeScreenMode.value = "driver"
-                    return@launchAction Result.success(Unit)
-                }
-            }
-
+                   repository.persistActiveRole("driver", foundName, cleanPhone)
+                      _activeScreenMode.value = "driver"
+               return@launchAction Result.success(Unit)
+}
+}
 val res = repository.persistActiveRole("driver", name, cleanPhone)
 if (res.isSuccess) _activeScreenMode.value = "driver"
 res
