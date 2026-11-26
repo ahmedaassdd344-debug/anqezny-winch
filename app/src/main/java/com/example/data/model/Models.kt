@@ -13,7 +13,9 @@ import kotlin.math.sqrt
 
 data class GizaArea(
     val id: String,
-    val nameAr: String,
+        val name: String = "",
+    val phone: String = "",
+
     val lat: Double,
     val lng: Double
 )
