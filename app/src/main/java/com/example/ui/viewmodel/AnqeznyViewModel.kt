@@ -274,11 +274,24 @@ if (res.isSuccess) _activeScreenMode.value = "driver"
 res
 }
 }
-fun toggleDriverOnline(online: Boolean) {
-launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
-repository.toggleDriverOnline(online)
-}
-}
+    fun toggleDriverOnline(online: Boolean) {
+        launchAction(if (online) "تم بدء الوردية — جاهز لاستقبال الطلبات" else "تم إيقاف استقبال الطلبات") {
+            val db = FirebaseFirestore.getInstance()
+            val updateMap = mapOf("online" to online, "userId" to currentUserId, "id" to currentUserId, "status" to "approved")
+            db.collection("drivers").document(currentUserId)
+                .set(updateMap, com.google.firebase.firestore.SetOptions.merge())
+                .await()
+            val activeDriverId = (driverProfileState.value as? UiState.Success)?.data?.userId
+                ?: (approvedDriversState.value as? UiState.Success)?.data?.firstOrNull()?.userId
+            if (!activeDriverId.isNullOrBlank() && activeDriverId != currentUserId) {
+                db.collection("drivers").document(activeDriverId)
+                    .set(mapOf("online" to online), com.google.firebase.firestore.SetOptions.merge())
+                    .await()
+            }
+            Result.success(Unit)
+        }
+    }
+
 fun registerCompany(
 companyName: String,
 managerName: String,
