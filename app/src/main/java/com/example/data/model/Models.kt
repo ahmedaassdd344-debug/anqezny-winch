@@ -277,7 +277,8 @@ data class Trip(
     val rated: Boolean = false,
     val gatewayLive: Boolean = false,
     val platformAccountInfo: String = ""
-)
+ )
+
 
     @ServerTimestamp val createdAt: Timestamp? = null,
     @ServerTimestamp val updatedAt: Timestamp? = null
