@@ -409,7 +409,7 @@ modifier = Modifier.weight(1f)
                                 colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
                                 modifier = Modifier.fillMaxWidth().testTag("save_pricing_button")
                             ) {
-                                                                Text("حفظ وتحديث الأسعار وحساب التطبيق")
+                                Text("حفظ وتحديث الأسعار وحساب التطبيق")
                             }
                         }
                     }
@@ -417,6 +417,16 @@ modifier = Modifier.weight(1f)
             }
         }
     }
-}
 
 private fun statusAr(s: String): String = when (s) {
+    "approved" -> "موثق"
+    "rejected" -> "مرفوض"
+    "suspended" -> "موقوف"
+    else -> "قيد المراجعة"
+}
+
+private fun statusColor(s: String): Color = when (s) {
+    "approved" -> AnqeznyEmerald
+    "rejected", "suspended" -> AnqeznyCrimson
+    else -> AnqeznyAmber
+}
