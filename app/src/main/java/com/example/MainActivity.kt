@@ -184,7 +184,7 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                         }
                     }
                 },
-                title = {
+                                title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("انقذنى عايز ونش", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Spacer(Modifier.width(8.dp))
@@ -214,15 +214,13 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
             )
         }
     ) { innerPadding ->
-
-    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
             when (effectiveMode) {
-                               "customer" -> {
+                "customer" -> {
                     val userPhoneDigits = userProfile?.phone?.filter { it.isDigit() }?.takeLast(10).orEmpty()
                     val allAdminTrips = (adminTripsState as? UiState.Success)?.data.orEmpty()
                     val directTrips = (customerTripsState as? UiState.Success)?.data.orEmpty()
@@ -258,12 +256,8 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                 }
 
                 "driver" -> DriverScreen(
-
                     driver = driverProfile ?: (adminDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull(),
                     driverPrivateDocs = driverPrivateDocs,
-
-
-
                     myReviewsState = myDriverReviewsState,
                     pricingConfig = pricingConfig,
                     pendingTripsState = pendingTripsState,
