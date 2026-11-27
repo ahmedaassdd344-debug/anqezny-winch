@@ -717,7 +717,6 @@ fun CustomerScreen(
             }
         }
     }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
