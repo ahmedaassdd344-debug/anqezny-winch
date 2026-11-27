@@ -601,9 +601,11 @@ fun CustomerScreen(
                                 Icon(Icons.Default.DirectionsCar, null)
                                 Spacer(Modifier.width(8.dp))
                                 Text("طلب ونش الآن (${pricing.totalFareEgp.roundToInt()} ج.م)", style = MaterialTheme.typography.titleMedium)
-                            }
-                        } 
-            } else {
+                                                      }
+                        }
+                    }
+                } else {
+
                 // Tab 1: Verified Drivers Directory (with public ratings!) & Trip History
                 Text(
                     text = "السائقون الموثقون في الجيزة (اضغط لعرض التقييمات)",
