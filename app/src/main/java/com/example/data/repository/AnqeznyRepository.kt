@@ -637,42 +637,32 @@ class AnqeznyRepository(
         }
     }
 
-    suspend fun completeTripAndSettleWallet(
-        trip: Trip,
+        suspend fun requestWalletTransaction(
         driver: DriverProfile,
-        signaturePointsCount: Int
+        type: String,
+        amountEgp: Double,
+        method: String,
+        accountOrRef: String
     ): Result<Unit> {
         val uid = requireUserId()
-        val tripPath = "trips/${trip.id}"
-        val driverPath = "drivers/$uid"
+        val realDriverId = driver.userId.ifBlank { uid }
+        val ref = db.collection("wallet_transactions").document()
         return try {
-            db.document(tripPath).update(
-                mapOf(
-                    "status" to "completed",
-                    "signaturePointsCount" to signaturePointsCount.toLong(),
-                    "signedByCustomer" to true,
-                    "updatedAt" to FieldValue.serverTimestamp()
-                )
-            ).await()
-
-            // Pre-gateway or cash: driver collects full cash -> commission deducted from escrow wallet
-            // Live electronic payment: platform collects -> driverNet added to withdrawableBalance
-            val isCashCollection = !trip.gatewayLive || trip.paymentMethod == "كاش"
-            val newWalletBalance = if (isCashCollection) {
-                driver.walletBalance - trip.commissionEgp
-            } else {
-                driver.walletBalance
+            require(amountEgp > 0) { "المبلغ غير صحيح" }
+            require(accountOrRef.trim().length >= 3) { "رقم المرجع أو الحساب مطلوب" }
+            if (type == "withdrawal") {
+                require(amountEgp <= driver.withdrawableBalance) { "المبلغ المطلوب أكبر من الأرباح المتاحة للسحب" }
             }
-            val newWithdrawableBalance = if (isCashCollection) {
-                driver.withdrawableBalance
-            } else {
-                driver.withdrawableBalance + trip.driverNetEgp
-            }
-            db.document(driverPath).update(
+            ref.set(
                 mapOf(
-                    "walletBalance" to newWalletBalance,
-                    "withdrawableBalance" to newWithdrawableBalance,
-                    "totalTrips" to driver.totalTrips + 1L,
+                    "driverId" to realDriverId,
+                    "driverName" to driver.name,
+                    "type" to type,
+                    "amountEgp" to amountEgp,
+                    "method" to method,
+                    "accountOrRef" to accountOrRef.trim().take(100),
+                    "status" to "pending",
+                    "createdAt" to FieldValue.serverTimestamp(),
                     "updatedAt" to FieldValue.serverTimestamp()
                 )
             ).await()
@@ -680,7 +670,7 @@ class AnqeznyRepository(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            handleFirestoreError(e, OperationType.UPDATE, tripPath)
+            handleFirestoreError(e, OperationType.CREATE, ref.path)
             Result.failure(e)
         }
     }
@@ -934,7 +924,7 @@ class AnqeznyRepository(
             Result.failure(e)
         }
     }
-            suspend fun adminUpdatePricingConfig(config: AppPricingConfig): Result<Unit> {
+               suspend fun adminUpdatePricingConfig(config: AppPricingConfig): Result<Unit> {
         val path = "app_config/pricing"
         return try {
             requireUserId()
@@ -948,6 +938,7 @@ class AnqeznyRepository(
                     "cancelFeeEgp" to config.cancelFeeEgp,
                     "minWithdrawEgp" to config.minWithdrawEgp,
                     "gatewayLive" to config.gatewayLive,
+                    "platformAccountInfo" to config.platformAccountInfo.trim().take(150),
                     "updatedAt" to FieldValue.serverTimestamp()
                 )
             ).await()
@@ -959,5 +950,3 @@ class AnqeznyRepository(
             Result.failure(e)
         }
     }
-}
-
