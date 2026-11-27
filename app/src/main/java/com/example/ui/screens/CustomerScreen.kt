@@ -602,8 +602,7 @@ fun CustomerScreen(
                                 Spacer(Modifier.width(8.dp))
                                 Text("طلب ونش الآن (${pricing.totalFareEgp.roundToInt()} ج.م)", style = MaterialTheme.typography.titleMedium)
                             }
-                        }
-                }
+                        } 
             } else {
                 // Tab 1: Verified Drivers Directory (with public ratings!) & Trip History
                 Text(
