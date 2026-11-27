@@ -364,17 +364,25 @@ modifier = Modifier.weight(1f)
                     var comm by remember(pricingConfig) { mutableStateOf(pricingConfig.commissionPercent.toString()) }
                     var minWallet by remember(pricingConfig) { mutableStateOf(pricingConfig.minWalletEgp.toString()) }
                     var cancelFee by remember(pricingConfig) { mutableStateOf(pricingConfig.cancelFeeEgp.toString()) }
+                    var platformAccount by remember(pricingConfig) { mutableStateOf(pricingConfig.platformAccountInfo) }
                     var gatewayLive by remember(pricingConfig) { mutableStateOf(pricingConfig.gatewayLive) }
 
                     Surface(shape = RoundedCornerShape(16.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text("إعدادات التسعير والعمولة والمحفظة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text("إعدادات التسعير والعمولة وحساب التطبيق", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             OutlinedTextField(value = diesel, onValueChange = { diesel = it }, label = { Text("سعر لتر السولار (ج.م)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(value = baseFare, onValueChange = { baseFare = it }, label = { Text("فتح العداد الأساسي (ج.م)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(value = perKm, onValueChange = { perKm = it }, label = { Text("سعر الكيلومتر (ج.م)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(value = comm, onValueChange = { comm = it }, label = { Text("نسبة عمولة المنصة (%)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(value = minWallet, onValueChange = { minWallet = it }, label = { Text("الحد الأدنى لمحفظة الضمان (ج.م)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(value = cancelFee, onValueChange = { cancelFee = it }, label = { Text("رسوم الإلغاء بعد التحرك (ج.م)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(
+                                value = platformAccount,
+                                onValueChange = { platformAccount = it },
+                                label = { Text("حساب استقبال عمولات التطبيق (بنك / إنستا باي / فودافون كاش)") },
+                                placeholder = { Text("مثال: 010xxxxxxxx أو user@instapay") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
 
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text("تفعيل بوابة الدفع الإلكتروني", fontWeight = FontWeight.Bold)
@@ -391,8 +399,9 @@ modifier = Modifier.weight(1f)
                                             commissionPercent = comm.toDoubleOrNull() ?: 15.0,
                                             minWalletEgp = minWallet.toDoubleOrNull() ?: 200.0,
                                             cancelFeeEgp = cancelFee.toDoubleOrNull() ?: 40.0,
-                                            minWithdrawEgp = pricingConfig.minWithdrawEgp,
-                                            gatewayLive = gatewayLive
+                                            minWithdrawEgp = 0.0,
+                                            gatewayLive = gatewayLive,
+                                            platformAccountInfo = platformAccount.trim()
                                         )
                                     )
                                 },
@@ -400,25 +409,8 @@ modifier = Modifier.weight(1f)
                                 colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
                                 modifier = Modifier.fillMaxWidth().testTag("save_pricing_button")
                             ) {
-                                Text("حفظ وتحديث الأسعار لحظياً")
+                                Text("حفظ وتحديث الأسعار وحساب التطبيق")
                             }
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-private fun statusAr(s: String): String = when (s) {
-    "approved" -> "موثق"
-    "rejected" -> "مرفوض"
-    "suspended" -> "موقوف"
-    else -> "قيد المراجعة"
-}
-
-private fun statusColor(s: String): Color = when (s) {
-    "approved" -> AnqeznyEmerald
-    "rejected", "suspended" -> AnqeznyCrimson
-    else -> AnqeznyAmber
-}
