@@ -258,7 +258,7 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                 }
 
                 "driver" -> DriverScreen(
-       
+
                     driver = driverProfile ?: (adminDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull(),
                     driverPrivateDocs = driverPrivateDocs,
 
