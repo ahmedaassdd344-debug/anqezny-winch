@@ -12,10 +12,12 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 data class GizaArea(
+    val id: String,
     val nameAr: String,
     val lat: Double,
     val lng: Double
 )
+
 
 
 val GIZA_AREAS = listOf(
