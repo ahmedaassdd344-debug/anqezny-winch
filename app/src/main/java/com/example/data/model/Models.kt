@@ -257,6 +257,7 @@ data class Trip(
     val scheduledAt: String? = null,
     val paymentMethod: String = "كاش",
     val gatewayLive: Boolean = false,
+    val platformAccountInfo: String = ""
     val fareEgp: Double = 0.0,
     val commissionEgp: Double = 0.0,
     val driverNetEgp: Double = 0.0,
