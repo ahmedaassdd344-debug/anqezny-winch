@@ -101,10 +101,15 @@ fun GizaRouteMap(
                     MapView(ctx).apply {
                         setTileSource(TileSourceFactory.MAPNIK)
                         setMultiTouchControls(true)
-                        controller.setZoom(13.5)
+                        controller.setZoom(14.5)
                         controller.setCenter(GeoPoint(pickupLat, pickupLng))
+                        setOnTouchListener { v, _ ->
+                            v.parent?.requestDisallowInterceptTouchEvent(true)
+                            false
+                        }
                     }
                 },
+
                 update = { mapView ->
                     mapView.overlays.clear()
 
