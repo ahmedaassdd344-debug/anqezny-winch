@@ -563,7 +563,7 @@ fun CustomerScreen(
                                     .padding(bottom = 6.dp)
                                     .testTag("customer_booking_phone_input")
                             )
-                            Button(
+                                                        Button(
                                 onClick = {
                                     val safePhone = contactPhone.trim().ifBlank { userProfile?.phone ?: "" }
                                     if (safePhone.length < 10) {
@@ -598,14 +598,15 @@ fun CustomerScreen(
                                     .height(54.dp)
                                     .testTag("create_trip_button")
                             ) {
-                                    Icon(Icons.Default.DirectionsCar, null)
+                                Icon(Icons.Default.DirectionsCar, null)
                                 Spacer(Modifier.width(8.dp))
                                 Text("طلب ونش الآن (${pricing.totalFareEgp.roundToInt()} ج.م)", style = MaterialTheme.typography.titleMedium)
                             }
                         }
+                    }
+                }
             } else {
                 // Tab 1: Verified Drivers Directory (with public ratings!) & Trip History
-
 
                 Text(
                     text = "السائقون الموثقون في الجيزة (اضغط لعرض التقييمات)",
