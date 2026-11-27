@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
@@ -104,22 +106,48 @@ fun playNewTripAlert(context: Context) {
 @SuppressLint("MissingPermission")
 suspend fun fetchCurrentGpsLocation(context: Context): Pair<Double, Double>? =
     suspendCancellableCoroutine { cont ->
+        fun fallbackSystemLocation(): Pair<Double, Double>? {
+            return try {
+                val lm = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
+                val providers = listOf(
+                    LocationManager.GPS_PROVIDER,
+                    LocationManager.NETWORK_PROVIDER,
+                    LocationManager.PASSIVE_PROVIDER
+                )
+                var best: Location? = null
+                for (p in providers) {
+                    val l = try { lm.getLastKnownLocation(p) } catch (_: Exception) { null }
+                    if (l != null && (best == null || l.time > best.time)) {
+                        best = l
+                    }
+                }
+                if (best != null) best.latitude to best.longitude else null
+            } catch (_: Exception) {
+                null
+            }
+        }
+
         try {
             val client = LocationServices.getFusedLocationProviderClient(context)
-            client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
+            client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener { loc ->
                     if (loc != null) {
-                        cont.resume(loc.latitude to loc.longitude)
+                        if (cont.isActive) cont.resume(loc.latitude to loc.longitude)
                     } else {
                         client.lastLocation
                             .addOnSuccessListener { last ->
-                                cont.resume(if (last != null) last.latitude to last.longitude else null)
+                                val res = if (last != null) (last.latitude to last.longitude) else fallbackSystemLocation()
+                                if (cont.isActive) cont.resume(res)
                             }
-                            .addOnFailureListener { cont.resume(null) }
+                            .addOnFailureListener {
+                                if (cont.isActive) cont.resume(fallbackSystemLocation())
+                            }
                     }
                 }
-                .addOnFailureListener { cont.resume(null) }
+                .addOnFailureListener {
+                    if (cont.isActive) cont.resume(fallbackSystemLocation())
+                }
         } catch (_: Exception) {
-            cont.resume(null)
+            if (cont.isActive) cont.resume(fallbackSystemLocation())
         }
     }
