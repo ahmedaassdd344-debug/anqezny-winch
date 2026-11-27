@@ -858,7 +858,9 @@ private fun DriverWalletSection(
     var topupMethod by remember { mutableStateOf("vodafone_cash") }
     var topupRef by remember { mutableStateOf("") }
 
-    var withdrawAmount by remember { mutableStateOf("100") }
+    var withdrawAmount by remember(driver.withdrawableBalance) {
+        mutableStateOf(if (driver.withdrawableBalance > 0) driver.withdrawableBalance.roundToInt().toString() else "")
+    }
     var withdrawMethod by remember { mutableStateOf("vodafone_cash") }
     var withdrawAccount by remember { mutableStateOf("") }
 
@@ -882,10 +884,22 @@ private fun DriverWalletSection(
                     color = if (driver.walletBalance >= pricingConfig.minWalletEgp) AnqeznyEmerald else AnqeznyCrimson
                 )
                 Text(
-                    "الحد الأدنى لاستقبال الطلبات: ${pricingConfig.minWalletEgp.roundToInt()} ج.م (تُخصم منه عمولة المنصة ${pricingConfig.commissionPercent.roundToInt()}% في الرحلات النقدية)",
+                    "الحد الأدنى لاستقبال الطلبات: ${pricingConfig.minWalletEgp.roundToInt()} ج.م (تُخصم منه عمولة المنصة ${pricingConfig.commissionPercent.roundToInt()}% في الرحلات النقدية فقط)",
                     style = MaterialTheme.typography.labelMedium,
                     color = AnqeznyInkSecondary
                 )
+
+                if (pricingConfig.platformAccountInfo.isNotBlank()) {
+                    Surface(shape = RoundedCornerShape(10.dp), color = AnqeznySurfaceVariant, modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "حساب استقبال التحويلات للمنصة: ${pricingConfig.platformAccountInfo}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AnqeznyInk,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
 
                 HorizontalDivider()
                 Text("طلب شحن محفظة الضمان", fontWeight = FontWeight.Bold)
@@ -928,15 +942,15 @@ private fun DriverWalletSection(
             }
         }
 
-        // Withdrawable Earnings Card
+        // Withdrawable Earnings Card (No minimum limit, instant full withdrawal!)
         Surface(shape = RoundedCornerShape(16.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("أرباح قابلة للسحب (الإلكتروني)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("أرباح الدفع الإلكتروني (قابلة للسحب)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text("${driver.withdrawableBalance.roundToInt()} ج.م", style = MaterialTheme.typography.headlineSmall, color = AnqeznyEmerald, fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    "الحد الأدنى للسحب ${pricingConfig.minWithdrawEgp.roundToInt()} ج.م بدون أي رسوم سحب.",
+                    "يمكنك سحب أرباحك بالكامل أو أي جزء منها بدون حد أدنى وبدون أي رسوم.",
                     style = MaterialTheme.typography.labelMedium,
                     color = AnqeznyInkSecondary
                 )
@@ -964,8 +978,8 @@ private fun DriverWalletSection(
                     onClick = {
                         val amt = withdrawAmount.toDoubleOrNull() ?: 0.0
                         when {
-                            amt < pricingConfig.minWithdrawEgp -> onShowMessage("الحد الأدنى للسحب ${pricingConfig.minWithdrawEgp.roundToInt()} ج.م")
-                            amt > driver.withdrawableBalance -> onShowMessage("الرصيد المتاح للسحب غير كافٍ")
+                            amt <= 0.0 -> onShowMessage("يرجى إدخال مبلغ صحيح للسحب")
+                            amt > driver.withdrawableBalance -> onShowMessage("المبلغ المطلوب أكبر من الأرباح المتاحة")
                             withdrawAccount.trim().length < 4 -> onShowMessage("أدخل رقم المحفظة أو الحساب البنكي")
                             else -> {
                                 onRequestTx("withdrawal", amt, withdrawMethod, withdrawAccount)
@@ -973,191 +987,11 @@ private fun DriverWalletSection(
                             }
                         }
                     },
-                    enabled = !isBusy,
+                    enabled = !isBusy && driver.withdrawableBalance > 0.0,
                     colors = ButtonDefaults.buttonColors(containerColor = AnqeznyEmerald),
                     modifier = Modifier.fillMaxWidth().testTag("submit_withdraw_button")
                 ) {
-                    Text("طلب سحب الأرباح")
+                    Text("سحب الأرباح الآن")
                 }
             }
         }
-
-        // Wallet Transaction History
-        if (transactions.isNotEmpty()) {
-            Text("سجل عمليات الشحن والسحب", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            transactions.forEach { tx ->
-                Surface(shape = RoundedCornerShape(12.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Column {
-                            Text(if (tx.type == "topup") "شحن رصيد" else "سحب أرباح", fontWeight = FontWeight.Bold)
-                            Text("${tx.method} • ${tx.accountOrRef}", style = MaterialTheme.typography.labelMedium, color = AnqeznyInkSecondary)
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("${tx.amountEgp.roundToInt()} ج.م", fontWeight = FontWeight.Bold)
-                            Text(
-                                text = when (tx.status) {
-                                    "approved" -> "مؤكد"
-                                    "rejected" -> "مرفوض"
-                                    else -> "قيد المراجعة"
-                                },
-                                style = MaterialTheme.typography.labelMedium,
-                                color = when (tx.status) {
-                                    "approved" -> AnqeznyEmerald
-                                    "rejected" -> AnqeznyCrimson
-                                    else -> AnqeznyAmber
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        TextButton(onClick = onOpenTerms, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text("عرض الشروط والأحكام وسياسة العمولة")
-        }
-    }
-}
-
-@Composable
-private fun StatCol(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Text(label, color = Color(0xFF94A3B8), style = MaterialTheme.typography.labelMedium)
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun DriverPrivateProfileSection(
-    driver: DriverProfile,
-    privateDocs: DriverPrivateDocs?,
-    reviews: List<DriverReview>,
-    onGoToWallet: () -> Unit,
-    onOpenTerms: () -> Unit,
-    onSwitchToCustomer: () -> Unit
-) {
-    val maskedNationalId = privateDocs?.nationalId?.let { id ->
-        if (id.length > 4) "••••••••${id.takeLast(4)}" else id
-    } ?: "موثق لدى الإدارة"
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // Identity Card
-        Surface(shape = RoundedCornerShape(18.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Verified, null, tint = AnqeznyEmerald)
-                        Spacer(Modifier.width(6.dp))
-                        Text(driver.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    }
-                    Surface(shape = RoundedCornerShape(8.dp), color = AnqeznyEmeraldContainer) {
-                        Text(
-                            text = "سائق معتمد",
-                            color = AnqeznyEmerald,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
-                HorizontalDivider()
-
-                ProfileDetailRow(Icons.Default.Phone, "رقم الموبايل المسجل", privateDocs?.phone ?: "مسجل بالحساب")
-                ProfileDetailRow(Icons.Default.Badge, "الرقم القومي", maskedNationalId)
-                ProfileDetailRow(Icons.Default.Badge, "رقم رخصة القيادة", "${privateDocs?.licenseNumber ?: "-"} (تنتهي: ${privateDocs?.licenseExpiry ?: "-"})")
-                ProfileDetailRow(Icons.Default.DirectionsCar, "الونش واللوحة", "${driver.winchType} • لوحة: ${driver.plateNumber}")
-                ProfileDetailRow(Icons.Default.CheckCircle, "نطاق العمل", "${driver.area} — محافظة الجيزة")
-                if (!driver.companyName.isNullOrBlank()) {
-                    ProfileDetailRow(Icons.Default.CheckCircle, "تابع لشركة", driver.companyName)
-                }
-            }
-        }
-
-        // Wallet & Performance Snapshot Card
-        Surface(shape = RoundedCornerShape(18.dp), color = AnqeznyCharcoal, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("ملخص محفظتك وأرباحك", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    StatCol("محفظة الضمان", "${driver.walletBalance.roundToInt()} ج.م")
-                    StatCol("قابل للسحب", "${driver.withdrawableBalance.roundToInt()} ج.م")
-                    StatCol("إجمالي الرحلات", "${driver.totalTrips}")
-                }
-                Button(
-                    onClick = onGoToWallet,
-                    colors = ButtonDefaults.buttonColors(containerColor = AnqeznyCrimson),
-                    modifier = Modifier.fillMaxWidth().testTag("profile_go_to_wallet_button")
-                ) {
-                    Icon(Icons.Default.AccountBalanceWallet, null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("إدارة الشحن وسحب الأرباح")
-                }
-            }
-        }
-
-        // Customer Rating & Reviews Card
-        Surface(shape = RoundedCornerShape(18.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("تقييمات العملاء عنك", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, null, tint = AnqeznyStarGold, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = if (driver.ratingCount > 0) String.format(Locale.US, "%.1f / 5 (%d)", driver.ratingAvg, driver.ratingCount) else "لا توجد تقييمات بعد",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                if (reviews.isEmpty()) {
-                    Text("ستظهر هنا تعليقات العملاء ونجومهم بعد إتمام الرحلات.", style = MaterialTheme.typography.bodyMedium, color = AnqeznyInkSecondary)
-                } else {
-                    reviews.take(10).forEach { rev ->
-                        Surface(shape = RoundedCornerShape(12.dp), color = AnqeznySurfaceVariant, modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(rev.customerName, fontWeight = FontWeight.Bold)
-                                    Text("★ ${rev.stars}/5", color = AnqeznyStarGold, fontWeight = FontWeight.Bold)
-                                }
-                                if (rev.tags.isNotEmpty()) {
-                                    Text(rev.tags.joinToString(" • "), style = MaterialTheme.typography.labelMedium, color = AnqeznyCrimson)
-                                }
-                                if (rev.comment.isNotBlank()) {
-                                    Text(rev.comment, style = MaterialTheme.typography.bodyMedium)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Quick Utility Actions
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = onOpenTerms, modifier = Modifier.weight(1f)) {
-                Text("الشروط والعمولة")
-            }
-            OutlinedButton(onClick = onSwitchToCustomer, modifier = Modifier.weight(1f)) {
-                Text("اطلب ونش كعميل")
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProfileDetailRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    value: String
-) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Icon(icon, contentDescription = null, tint = AnqeznyCrimson, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(8.dp))
-        Column {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = AnqeznyInkSecondary)
-            Text(value, style = MaterialTheme.typography.bodyMedium, color = AnqeznyInk, fontWeight = FontWeight.Bold)
-        }
-    }
-}
