@@ -199,26 +199,6 @@ class AnqeznyViewModel(
         }
     }
 
-        val uid = requireUserId()
-        return toggleDriverOnlineForId(uid, online)
-    }
-
-        val path = "drivers/$driverId"
-        return try {
-            db.document(path).update(
-                mapOf(
-                    "online" to online,
-                    "updatedAt" to FieldValue.serverTimestamp()
-                )
-            ).await()
-            Result.success(Unit)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            handleFirestoreError(e, OperationType.UPDATE, path)
-            Result.failure(e)
-        }
-    }
     fun resumeDriverPortal(name: String, phone: String) {
         launchAction("تم فتح صفحتك الخاصة كسائق") {
             val digitsOnly = phone.filter { it.isDigit() }
