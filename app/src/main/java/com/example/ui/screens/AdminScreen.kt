@@ -318,7 +318,7 @@ modifier = Modifier.weight(1f)
                     }
                 }
 
-                3 -> {
+                                3 -> {
                     if (walletTxs.isEmpty()) {
                         Text("لا توجد طلبات شحن أو سحب حالياً.", color = AnqeznyInkSecondary)
                     } else {
@@ -417,6 +417,7 @@ modifier = Modifier.weight(1f)
             }
         }
     }
+}
 
 private fun statusAr(s: String): String = when (s) {
     "approved" -> "موثق"
