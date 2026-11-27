@@ -637,43 +637,55 @@ class AnqeznyRepository(
         }
     }
 
-        suspend fun requestWalletTransaction(
+            suspend fun completeTripAndSettleWallet(
+        trip: Trip,
         driver: DriverProfile,
-        type: String,
-        amountEgp: Double,
-        method: String,
-        accountOrRef: String
+        signaturePointsCount: Int
     ): Result<Unit> {
-        val uid = requireUserId()
-        val realDriverId = driver.userId.ifBlank { uid }
-        val ref = db.collection("wallet_transactions").document()
+        val tripPath = "trips/${trip.id}"
+        val realDriverId = driver.userId.ifBlank { requireUserId() }
+        val driverPath = "drivers/$realDriverId"
         return try {
-            require(amountEgp > 0) { "المبلغ غير صحيح" }
-            require(accountOrRef.trim().length >= 3) { "رقم المرجع أو الحساب مطلوب" }
-            if (type == "withdrawal") {
-                require(amountEgp <= driver.withdrawableBalance) { "المبلغ المطلوب أكبر من الأرباح المتاحة للسحب" }
-            }
-            ref.set(
+            require(signaturePointsCount >= 5) { "يرجى الحصول على توقيع العميل عند التسليم أولاً" }
+            val isCash = !trip.gatewayLive || trip.paymentMethod == "كاش"
+
+            db.document(tripPath).update(
                 mapOf(
-                    "driverId" to realDriverId,
-                    "driverName" to driver.name,
-                    "type" to type,
-                    "amountEgp" to amountEgp,
-                    "method" to method,
-                    "accountOrRef" to accountOrRef.trim().take(100),
-                    "status" to "pending",
-                    "createdAt" to FieldValue.serverTimestamp(),
+                    "status" to "completed",
+                    "signatureCaptured" to true,
+                    "completedAt" to FieldValue.serverTimestamp(),
                     "updatedAt" to FieldValue.serverTimestamp()
                 )
             ).await()
+
+            val driverSnap = db.document(driverPath).get().await()
+            val curWallet = driverSnap.getDouble("walletBalance") ?: driver.walletBalance
+            val curWithdrawable = driverSnap.getDouble("withdrawableBalance") ?: driver.withdrawableBalance
+            val curCompleted = driverSnap.getLong("completedTrips") ?: driver.completedTrips.toLong()
+
+            val driverUpdates = if (isCash) {
+                mapOf(
+                    "walletBalance" to (curWallet - trip.commissionEgp).coerceAtLeast(0.0),
+                    "completedTrips" to (curCompleted + 1L),
+                    "updatedAt" to FieldValue.serverTimestamp()
+                )
+            } else {
+                mapOf(
+                    "withdrawableBalance" to (curWithdrawable + trip.driverNetEgp),
+                    "completedTrips" to (curCompleted + 1L),
+                    "updatedAt" to FieldValue.serverTimestamp()
+                )
+            }
+            db.document(driverPath).update(driverUpdates).await()
             Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            handleFirestoreError(e, OperationType.CREATE, ref.path)
+            handleFirestoreError(e, OperationType.UPDATE, tripPath)
             Result.failure(e)
         }
     }
+
 
     suspend fun cancelTrip(trip: Trip, cancelFeeEgp: Double, reason: String): Result<Unit> {
         val path = "trips/${trip.id}"
