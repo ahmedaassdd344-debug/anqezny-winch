@@ -256,8 +256,8 @@ data class Trip(
     val serviceType: String = "",
     val scheduledAt: String? = null,
     val paymentMethod: String = "كاش",
-    val gatewayLive: Boolean = false,
-    val platformAccountInfo: String = ""
+        val paymentMethod: String = "كاش",
+    val fareEgp: Double = 0.0,
     val fareEgp: Double = 0.0,
     val commissionEgp: Double = 0.0,
     val driverNetEgp: Double = 0.0,
@@ -277,6 +277,10 @@ data class Trip(
     val rating: Long? = null,
     val reviewComment: String? = null,
     val rated: Boolean = false,
+        val gatewayLive: Boolean = false,
+    val platformAccountInfo: String = ""
+)
+
     @ServerTimestamp val createdAt: Timestamp? = null,
     @ServerTimestamp val updatedAt: Timestamp? = null
 )
