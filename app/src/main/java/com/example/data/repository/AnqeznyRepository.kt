@@ -661,7 +661,7 @@ class AnqeznyRepository(
             val driverSnap = db.document(driverPath).get().await()
             val curWallet = driverSnap.getDouble("walletBalance") ?: driver.walletBalance
             val curWithdrawable = driverSnap.getDouble("withdrawableBalance") ?: driver.withdrawableBalance
-            val curCompleted = driverSnap.getLong("completedTrips") ?: driver.completedTrips.toLong()
+            val curCompleted = driverSnap.getLong("completedTrips") ?: 0L
 
             val driverUpdates = if (isCash) {
                 mapOf(
@@ -962,3 +962,4 @@ class AnqeznyRepository(
             Result.failure(e)
         }
     }
+               }
