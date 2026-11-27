@@ -600,11 +600,12 @@ fun CustomerScreen(
                             ) {
                                 Icon(Icons.Default.DirectionsCar, null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("طلب ونش الآن (${pricing.totalFareEgp.roundToInt()} ج.م)", style = MaterialTheme.typography.titleMedium)
-                                                      }
+                                                               Text("طلب ونش الآن (${pricing.totalFareEgp.roundToInt()} ج.م)", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
                     }
                 } else {
+                    // Tab 1: Verified Drivers Directory (with public ratings!) & Trip History
 
                 // Tab 1: Verified Drivers Directory (with public ratings!) & Trip History
                 Text(
