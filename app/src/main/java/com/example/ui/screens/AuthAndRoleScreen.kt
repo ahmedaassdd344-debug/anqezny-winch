@@ -337,7 +337,8 @@ fun RoleSelectionScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header card
+                        // Header card (5 secret taps on title opens Admin Portal!)
+            var secretAdminTaps by remember { mutableIntStateOf(0) }
             Surface(
                 shape = RoundedCornerShape(18.dp),
                 color = AnqeznyCharcoal,
@@ -348,11 +349,18 @@ fun RoleSelectionScreen(
                         text = "انقذنى عايز ونش — الجيزة",
                         style = MaterialTheme.typography.headlineSmall,
                         color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable {
+                            secretAdminTaps++
+                            if (secretAdminTaps >= 5) {
+                                secretAdminTaps = 0
+                                onEnterAdmin()
+                            }
+                        }
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "أهلاً ${authUser?.displayName ?: "بك"} • اختر وجهتك وابدأ فوراً بدون تعقيد",
+                        text = "أهلاً بك • اطلب أقرب ونش إنقاذ في الجيزة خلال ثوانٍ",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFFCBD5E1)
                     )
@@ -621,27 +629,7 @@ fun RoleSelectionScreen(
                 }
 
                 Spacer(Modifier.height(4.dp))
-
-                // Small Admin link at bottom
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    TextButton(
-                        onClick = {
-                            if (isAdminVerified) {
-                                onEnterAdmin()
-                            } else {
-                                onShowMessage("صلاحيات الإدارة متاحة لحساب مدير المنصة المعتمد فقط")
-                            }
-                        },
-                        modifier = Modifier.testTag("admin_entry_link")
-                    ) {
-                        Icon(Icons.Default.AdminPanelSettings, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("دخول الإدارة وموزع الطلبات")
-                    }
-                }
+                
             } else if (selectedEntry == "customer") {
                 // Ultra-fast First-time Customer Entry (NO OTP!)
                 Surface(
