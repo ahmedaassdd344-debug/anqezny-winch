@@ -995,3 +995,112 @@ private fun DriverWalletSection(
                 }
             }
         }
+                // Wallet Transaction History
+        if (transactions.isNotEmpty()) {
+            Text("سجل عمليات الشحن والسحب", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            transactions.forEach { tx ->
+                Surface(shape = RoundedCornerShape(12.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = if (tx.type == "topup") "شحن محفظة الضمان (${tx.amountEgp.roundToInt()} ج.م)" else "سحب أرباح (${tx.amountEgp.roundToInt()} ج.م)",
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text("المرجع: ${tx.accountOrRef}", style = MaterialTheme.typography.labelMedium, color = AnqeznyInkSecondary)
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = when (tx.status) {
+                                "approved" -> AnqeznyEmeraldContainer
+                                "rejected" -> AnqeznyCrimsonContainer
+                                else -> AnqeznyAmberContainer
+                            }
+                        ) {
+                            Text(
+                                text = when (tx.status) {
+                                    "approved" -> "مؤكد"
+                                    "rejected" -> "مرفوض"
+                                    else -> "قيد المراجعة"
+                                },
+                                color = when (tx.status) {
+                                    "approved" -> AnqeznyEmerald
+                                    "rejected" -> AnqeznyCrimson
+                                    else -> AnqeznyAmber
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatCol(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(label, color = Color(0xFFCBD5E1), style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+@Composable
+private fun DriverPrivateProfileSection(
+    driver: DriverProfile,
+    privateDocs: DriverPrivateDocs?,
+    reviews: List<DriverReview>,
+    onGoToWallet: () -> Unit,
+    onOpenTerms: () -> Unit,
+    onSwitchToCustomer: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(shape = RoundedCornerShape(16.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("الملف الشخصي والبيانات الموثقة", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("الاسم: ${driver.name}", style = MaterialTheme.typography.bodyMedium)
+                if (driver.phone.isNotBlank()) {
+                    Text("الموبايل المسجل: ${driver.phone}", style = MaterialTheme.typography.bodyMedium)
+                }
+                Text("نوع الونش: ${driver.winchType} • اللوحة: ${driver.plateNumber}", style = MaterialTheme.typography.bodyMedium)
+                Text("منطقة العمل: ${driver.area}", style = MaterialTheme.typography.bodyMedium)
+                if (privateDocs != null) {
+                    Text("رقم الرخصة: ${privateDocs.licenseNumber} (تنتهي: ${privateDocs.licenseExpiry})", style = MaterialTheme.typography.bodySmall, color = AnqeznyInkSecondary)
+                }
+                Spacer(Modifier.height(4.dp))
+                OutlinedButton(onClick = onGoToWallet, modifier = Modifier.fillMaxWidth()) {
+                    Text("الانتقال للمحفظة وسحب الأرباح")
+                }
+                TextButton(onClick = onSwitchToCustomer, modifier = Modifier.fillMaxWidth()) {
+                    Text("التبديل إلى وضع العميل (طلب ونش)")
+                }
+            }
+        }
+
+        Text("تقييمات العملاء (${reviews.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        if (reviews.isEmpty()) {
+            Text("لا توجد تقييمات بعد.", style = MaterialTheme.typography.bodyMedium, color = AnqeznyInkSecondary)
+        } else {
+            reviews.forEach { rev ->
+                Surface(shape = RoundedCornerShape(12.dp), color = Color.White, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(rev.customerName, fontWeight = FontWeight.Bold)
+                            Text("${rev.stars} ★", color = AnqeznyStarGold, fontWeight = FontWeight.Bold)
+                        }
+                        if (rev.comment.isNotBlank()) {
+                            Text(rev.comment, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
