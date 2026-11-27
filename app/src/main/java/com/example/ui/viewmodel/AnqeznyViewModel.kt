@@ -199,12 +199,10 @@ class AnqeznyViewModel(
         }
     }
 
-                  suspend fun toggleDriverOnline(online: Boolean): Result<Unit> {
         val uid = requireUserId()
         return toggleDriverOnlineForId(uid, online)
     }
 
-    suspend fun toggleDriverOnlineForId(driverId: String, online: Boolean): Result<Unit> {
         val path = "drivers/$driverId"
         return try {
             db.document(path).update(
