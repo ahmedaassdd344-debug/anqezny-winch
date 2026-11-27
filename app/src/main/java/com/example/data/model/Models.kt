@@ -276,10 +276,6 @@ data class Trip(
     val reviewComment: String? = null,
     val rated: Boolean = false,
     val gatewayLive: Boolean = false,
-    val platformAccountInfo: String = ""
- )
-
-
     @ServerTimestamp val createdAt: Timestamp? = null,
     @ServerTimestamp val updatedAt: Timestamp? = null
 )
@@ -339,5 +335,6 @@ data class AppPricingConfig(
     val cancelFeeEgp: Double = 40.0,
     val minWithdrawEgp: Double = 100.0,
     val gatewayLive: Boolean = false,
+    val platformAccountInfo: String = "",
     @ServerTimestamp val updatedAt: Timestamp? = null
 )
