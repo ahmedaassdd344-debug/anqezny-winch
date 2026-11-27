@@ -604,7 +604,7 @@ fun CustomerScreen(
                             }
                         }
                     }
-                }
+                
             } else {
                 // Tab 1: Verified Drivers Directory (with public ratings!) & Trip History
 
