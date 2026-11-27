@@ -169,13 +169,20 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
+                    TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = AnqeznyCharcoal,
                     titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
                     actionIconContentColor = Color.White
                 ),
+                navigationIcon = {
+                    if (effectiveMode != "role_select") {
+                        IconButton(onClick = { viewModel.setScreenMode("role_select") }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع", tint = Color.White)
+                        }
+                    }
+                },
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("انقذنى عايز ونش", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
@@ -197,17 +204,15 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                     if (effectiveMode != "role_select") {
                         TextButton(onClick = { viewModel.setScreenMode("role_select") }) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Icon(Icons.Default.SwapHoriz, contentDescription = "تبديل الدور", tint = Color.White)
-                                Text("تبديل", color = Color.White)
+                                Icon(Icons.Default.SwapHoriz, contentDescription = "رجوع للرئيسية", tint = Color.White)
+                                Text("الرئيسية", color = Color.White)
                             }
                         }
                     }
-                    IconButton(onClick = { signOut(credentialManager, scope) }) {
-                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "تسجيل الخروج")
-                    }
                 }
             )
-        }
+
+
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -215,27 +220,40 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                 .padding(innerPadding)
         ) {
             when (effectiveMode) {
-                "customer" -> CustomerScreen(
-                    userProfile = userProfile,
-                    pricingConfig = pricingConfig,
-                    tripsState = customerTripsState,
-                    approvedDriversState = approvedDriversState,
-                    tripMessagesState = tripMessagesState,
-                    driverReviewsState = driverReviewsState,
-                    isBusy = isBusy,
-                    onWatchTripMessages = viewModel::watchTripMessages,
-                    onWatchDriverReviews = viewModel::watchDriverReviews,
-                    onCreateTrip = { name, phone, pArea, pLat, pLng, dArea, dLat, dLng, dist, veh, svc, sched, pay, gw, fare, comm, net ->
-                        viewModel.createTrip(
-                            name, phone, pArea, pLat, pLng, dArea, dLat, dLng, dist,
-                            veh, svc, sched, pay, gw, fare, comm, net, assignedDriver = null
-                        )
-                    },
-                    onCancelTrip = viewModel::cancelTrip,
-                    onSendMessage = viewModel::sendTripMessage,
-                    onSubmitRating = viewModel::submitRatingAndReview,
-                    onShowMessage = viewModel::showFeedback
-                )
+                               "customer" -> {
+                    val userPhoneDigits = userProfile?.phone?.filter { it.isDigit() }?.takeLast(10).orEmpty()
+                    val allAdminTrips = (adminTripsState as? UiState.Success)?.data.orEmpty()
+                    val directTrips = (customerTripsState as? UiState.Success)?.data.orEmpty()
+                    val combinedCustomerTrips = if (userPhoneDigits.length >= 8) {
+                        val byPhone = allAdminTrips.filter { t ->
+                            t.customerPhone.filter { it.isDigit() }.endsWith(userPhoneDigits)
+                        }
+                        UiState.Success((directTrips + byPhone).distinctBy { it.id })
+                    } else {
+                        customerTripsState
+                    }
+                    CustomerScreen(
+                        userProfile = userProfile,
+                        pricingConfig = pricingConfig,
+                        tripsState = combinedCustomerTrips,
+                        approvedDriversState = approvedDriversState,
+                        tripMessagesState = tripMessagesState,
+                        driverReviewsState = driverReviewsState,
+                        isBusy = isBusy,
+                        onWatchTripMessages = viewModel::watchTripMessages,
+                        onWatchDriverReviews = viewModel::watchDriverReviews,
+                        onCreateTrip = { name, phone, pArea, pLat, pLng, dArea, dLat, dLng, dist, veh, svc, sched, pay, gw, fare, comm, net ->
+                            viewModel.createTrip(
+                                name, phone, pArea, pLat, pLng, dArea, dLat, dLng, dist,
+                                veh, svc, sched, pay, gw, fare, comm, net, assignedDriver = null
+                            )
+                        },
+                        onCancelTrip = viewModel::cancelTrip,
+                        onSendMessage = viewModel::sendTripMessage,
+                        onSubmitRating = viewModel::submitRatingAndReview,
+                        onShowMessage = viewModel::showFeedback
+                    )
+                }
 
                                                     "driver" -> DriverScreen(
                     driver = driverProfile ?: (adminDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull { it.name == userProfile?.displayName } ?: (approvedDriversState as? UiState.Success)?.data?.firstOrNull(),
