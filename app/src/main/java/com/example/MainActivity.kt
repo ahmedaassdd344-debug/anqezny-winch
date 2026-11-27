@@ -169,7 +169,8 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-                    TopAppBar(
+        topBar = {
+            TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = AnqeznyCharcoal,
                     titleContentColor = Color.White,
@@ -211,7 +212,8 @@ fun AnqeznyAuthenticatedShell(currentUserId: String) {
                     }
                 }
             )
-
+        }
+    ) { innerPadding ->
 
     ) { innerPadding ->
         Box(
